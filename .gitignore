@@ -1,0 +1,58 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+dist-ssr
+build
+
+# Environment files — NEVER commit these
+.env
+.env.*
+!.env.example
+
+# Secrets & credentials
+*.pem
+*.key
+*.p12
+
+# Turbo cache
+.turbo
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# Prisma generated client (regenerated from schema on install)
+apps/backend/src/prisma/generated/
+
+# Test coverage
+coverage
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Terraform state — contains secrets
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+.terraform/
