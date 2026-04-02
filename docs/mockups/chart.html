@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StockTracker — Chart Panel Mockup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#edfaf3', 100:'#d3f4e3', 500:'#16a34a', 600:'#15803d', 700:'#166534' }
+          },
+          fontFamily: { sans: ['Inter','system-ui','sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* Skeleton shimmer */
+    @keyframes shimmer {
+      0%   { background-position: -600px 0; }
+      100% { background-position:  600px 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+      background-size: 600px 100%;
+      animation: shimmer 1.4s infinite linear;
+      border-radius: 3px;
+    }
+
+    /* Chart panel slide animation */
+    .chart-panel-wrap {
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.22s ease;
+    }
+    .chart-panel-wrap.closed { max-height: 0;    opacity: 0; }
+    .chart-panel-wrap.open   { max-height: 520px; opacity: 1; }
+
+    /* Range tab states */
+    .range-tab { color: #64748b; background: transparent; transition: background 0.12s, color 0.12s; }
+    .range-tab.active { color: #15803d; background: #edfaf3; }
+    .range-tab:hover:not(.active) { background: #f8fafc; color: #334155; }
+
+    /* Focus ring */
+    .focus-brand:focus { outline: none; box-shadow: 0 0 0 3px rgba(22,163,74,.3); border-color: #16a34a; }
+
+    /* Price flash */
+    @keyframes flash-green { 0%,100%{background-color:transparent} 30%{background-color:#dcfce7} }
+    @keyframes flash-red   { 0%,100%{background-color:transparent} 30%{background-color:#fee2e2} }
+    .flash-up   { animation: flash-green 0.8s ease; }
+    .flash-down { animation: flash-red   0.8s ease; }
+
+    /* Watchlist row */
+    .stock-row:hover  { background: #f8fafc; }
+    .stock-row.selected { background: #f8fafc; border-left: 2px solid #16a34a; }
+    .stock-row { border-left: 2px solid transparent; }
+
+    /* Tooltip — fixed positioning */
+    #chart-tooltip { position: fixed; pointer-events: none; }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-100 font-sans antialiased">
+
+<!-- ── HOVER TOOLTIP ──────────────────────────────────────────────── -->
+<div id="chart-tooltip"
+     class="hidden z-50 bg-white border border-slate-200 rounded-xl shadow-xl p-3 text-xs min-w-[130px]">
+  <div class="font-semibold text-slate-700 mb-2 truncate" id="tt-time">09:30 AM ET</div>
+  <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+    <span class="text-slate-400">Open</span>  <span class="text-slate-700 font-medium tabular-nums text-right" id="tt-o">—</span>
+    <span class="text-slate-400">High</span>  <span class="text-green-600 font-medium tabular-nums text-right" id="tt-h">—</span>
+    <span class="text-slate-400">Low</span>   <span class="text-red-500  font-medium tabular-nums text-right" id="tt-l">—</span>
+    <span class="text-slate-400">Close</span> <span class="text-slate-700 font-medium tabular-nums text-right" id="tt-c">—</span>
+    <span class="text-slate-400">Vol</span>   <span class="text-slate-600 tabular-nums text-right" id="tt-v">—</span>
+  </div>
+</div>
+
+<!-- ── STATE SWITCHER ─────────────────────────────────────────────── -->
+<div class="fixed bottom-4 right-4 z-50 bg-white border border-slate-200 rounded-xl shadow-lg p-3">
+  <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 px-1">Chart States</p>
+  <div class="flex flex-col gap-1">
+    <button onclick="applyState('chart-1d')"     class="state-btn px-3 py-1.5 text-xs font-medium rounded-lg text-left" data-state="chart-1d">Chart open — 1D</button>
+    <button onclick="applyState('loading')"       class="state-btn px-3 py-1.5 text-xs font-medium rounded-lg text-left" data-state="loading">Loading (skeleton)</button>
+    <button onclick="applyState('chart-1w')"     class="state-btn px-3 py-1.5 text-xs font-medium rounded-lg text-left" data-state="chart-1w">1W view</button>
+    <button onclick="applyState('chart-1m')"     class="state-btn px-3 py-1.5 text-xs font-medium rounded-lg text-left" data-state="chart-1m">1M view</button>
+    <button onclick="applyState('no-data')"      class="state-btn px-3 py-1.5 text-xs font-medium rounded-lg text-left" data-state="no-data">No data</button>
+    <button onclick="applyState('chart-closed')" class="state-btn px-3 py-1.5 text-xs font-medium rounded-lg text-left" data-state="chart-closed">Chart closed</button>
+  </div>
+</div>
+
+<!-- ── APP SHELL ──────────────────────────────────────────────────── -->
+<div class="flex h-screen overflow-hidden">
+
+  <!-- SIDEBAR -->
+  <aside class="w-56 bg-slate-900 flex-shrink-0 flex flex-col overflow-hidden">
+    <div class="px-4 py-5 border-b border-slate-800">
+      <div class="flex items-center gap-2.5">
+        <div class="w-7 h-7 bg-brand-500 rounded-md flex items-center justify-center flex-shrink-0">
+          <svg class="w-4 h-4 text-white" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <rect x="4"  y="6"  width="2" height="8" rx="1"/>
+            <line x1="5"  y1="3"  x2="5"  y2="6"  stroke="currentColor" stroke-width="1.5"/>
+            <line x1="5"  y1="14" x2="5"  y2="17" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="9"  y="9"  width="2" height="5" rx="1" fill="#4ade80"/>
+            <line x1="10" y1="6"  x2="10" y2="9"  stroke="#4ade80" stroke-width="1.5"/>
+            <rect x="14" y="7"  width="2" height="6" rx="1"/>
+            <line x1="15" y1="4"  x2="15" y2="7"  stroke="currentColor" stroke-width="1.5"/>
+            <line x1="15" y1="13" x2="15" y2="16" stroke="currentColor" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <span class="text-white font-semibold text-base tracking-tight">StockTracker</span>
+      </div>
+    </div>
+    <nav class="flex-1 px-3 py-4 space-y-0.5" aria-label="Main navigation">
+      <a href="#" class="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-slate-800 text-white text-sm font-medium" aria-current="page">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+        <span>Dashboard</span>
+      </a>
+      <a href="#" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm font-medium transition-colors">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        <span>Watchlist</span>
+        <span class="ml-auto text-xs bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded-full">4</span>
+      </a>
+      <a href="#" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm font-medium transition-colors">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+        <span>Alerts</span>
+      </a>
+      <a href="#" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm font-medium transition-colors opacity-50 cursor-not-allowed" aria-disabled="true" tabindex="-1">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2h-2"/>
+        </svg>
+        <span>AI Chat</span>
+        <span class="ml-auto text-xs bg-brand-700 text-brand-100 px-1.5 py-0.5 rounded-full">Premium</span>
+      </a>
+    </nav>
+    <div class="px-3 py-4 border-t border-slate-800">
+      <div class="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-800 cursor-pointer transition-colors">
+        <div class="w-7 h-7 rounded-full bg-brand-600 flex items-center justify-center flex-shrink-0">
+          <span class="text-white text-xs font-semibold">A</span>
+        </div>
+        <div class="min-w-0">
+          <p class="text-white text-xs font-medium truncate">alice@example.com</p>
+          <p class="text-slate-400 text-xs">Free plan</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+    <!-- TOPBAR -->
+    <header class="h-14 bg-white border-b border-slate-200 flex items-center px-6 gap-4 flex-shrink-0 z-20">
+      <div class="flex-1">
+        <h1 class="text-sm font-semibold text-slate-900">Dashboard</h1>
+        <p class="text-xs text-slate-400">Thursday, Apr 2, 2026</p>
+      </div>
+      <div class="flex items-center gap-1.5" aria-live="polite" aria-label="Connection status: live">
+        <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
+        <span class="text-xs text-slate-500 font-medium">Live</span>
+      </div>
+      <div class="relative hidden sm:block">
+        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+        <input type="search" placeholder="Search stocks…" aria-label="Search stocks"
+          class="focus-brand w-52 pl-9 pr-3 py-1.5 text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-lg placeholder:text-slate-400 hover:border-slate-300" />
+      </div>
+      <button type="button" aria-label="Notifications"
+        class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <svg style="width:18px;height:18px" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+      </button>
+      <div class="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-slate-100 cursor-pointer transition-colors">
+        <div class="w-7 h-7 rounded-full bg-brand-600 flex items-center justify-center">
+          <span class="text-white text-xs font-semibold" aria-hidden="true">A</span>
+        </div>
+        <svg class="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+        </svg>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <main class="flex-1 overflow-y-auto p-6 bg-slate-50">
+      <div class="max-w-4xl mx-auto">
+
+        <!-- Watchlist card -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+
+          <!-- Panel header -->
+          <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <div class="flex items-center gap-2">
+              <h2 class="text-sm font-semibold text-slate-900">Watchlist</h2>
+              <span class="text-xs bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full font-medium">4 stocks</span>
+            </div>
+          </div>
+
+          <!-- Add stock bar -->
+          <div class="flex items-center gap-2 px-5 py-3 border-b border-slate-100 bg-slate-50/60">
+            <input type="text" placeholder="Add symbol  (e.g. AAPL)" aria-label="Add stock symbol"
+              class="focus-brand flex-1 px-3 py-1.5 text-sm bg-white border border-slate-200 rounded-lg placeholder:text-slate-400 text-slate-700 hover:border-slate-300" />
+            <button type="button"
+              class="px-4 py-1.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-1">
+              Add
+            </button>
+          </div>
+
+          <!-- Column headers -->
+          <div class="flex items-center px-5 py-2 border-b border-slate-100 text-[11px] text-slate-400 font-semibold uppercase tracking-wide">
+            <span class="w-20">Symbol</span>
+            <span class="flex-1 hidden sm:block">Company</span>
+            <span class="w-28 text-right">Price</span>
+            <span class="w-20 text-right">Change</span>
+            <span class="w-20 text-right hidden md:block">% Chg</span>
+            <span class="w-8"></span>
+          </div>
+
+          <!-- ── AAPL row (selected) ─────────────────────────── -->
+          <div id="aapl-row"
+               class="stock-row selected flex items-center px-5 py-3 border-b border-slate-100 cursor-pointer"
+               onclick="toggleChart()">
+            <div class="w-20 flex items-center gap-1.5">
+              <span class="text-sm font-semibold text-slate-900">AAPL</span>
+              <svg id="aapl-chevron" class="w-3 h-3 text-slate-400 transition-transform duration-200 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+            <span class="flex-1 hidden sm:block text-xs text-slate-400 truncate">Apple Inc.</span>
+            <span class="w-28 text-right text-sm font-semibold text-slate-900 tabular-nums">$187.42</span>
+            <span class="w-20 text-right text-xs font-medium text-green-600 tabular-nums">+1.56</span>
+            <span class="w-20 text-right text-xs font-medium text-green-600 tabular-nums hidden md:block">▲ +0.84%</span>
+            <button type="button" aria-label="Remove AAPL" onclick="event.stopPropagation()"
+              class="w-8 flex items-center justify-center text-slate-300 hover:text-red-400 transition-colors ml-1">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- ── CHART PANEL (inline expand below AAPL) ─────── -->
+          <div id="chart-panel-wrap" class="chart-panel-wrap open border-b border-slate-200">
+
+            <!-- Chart header bar -->
+            <div class="flex items-center justify-between px-5 py-3 bg-slate-50/80 border-b border-slate-200">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-bold text-slate-900">AAPL</span>
+                  <span class="text-xs text-slate-400 hidden sm:block">Apple Inc.</span>
+                </div>
+                <div class="h-3.5 border-l border-slate-200 hidden sm:block"></div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-sm font-semibold text-slate-900 tabular-nums">$187.42</span>
+                  <span class="text-xs font-medium text-green-600">▲ +0.84%</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <!-- Range tab group -->
+                <div class="flex rounded-lg border border-slate-200 overflow-hidden bg-white"
+                     role="group" aria-label="Chart time range">
+                  <button id="tab-1d" class="range-tab active px-3 py-1 text-xs font-semibold"
+                          onclick="selectRange('1D')" aria-pressed="true">1D</button>
+                  <button id="tab-1w" class="range-tab border-l border-slate-200 px-3 py-1 text-xs font-semibold"
+                          onclick="selectRange('1W')" aria-pressed="false">1W</button>
+                  <button id="tab-1m" class="range-tab border-l border-slate-200 px-3 py-1 text-xs font-semibold"
+                          onclick="selectRange('1M')" aria-pressed="false">1M</button>
+                </div>
+                <!-- Close chart -->
+                <button type="button" onclick="toggleChart()" aria-label="Close chart"
+                  class="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Chart body -->
+            <div class="bg-white">
+
+              <!-- Loaded: SVG candlestick chart -->
+              <div id="chart-svg-wrap" class="relative px-2 pt-2 pb-0">
+                <svg id="candle-svg" width="100%" height="280"
+                     role="img" aria-label="Candlestick chart for AAPL, 1D view"
+                     style="display:block; overflow:visible"></svg>
+                <!-- Invisible overlay captures mouse events for tooltip/crosshair -->
+                <div id="chart-overlay" class="absolute inset-0" style="cursor:crosshair"></div>
+              </div>
+
+              <!-- Loading: skeleton state -->
+              <div id="chart-skeleton" class="hidden px-4 pt-3 pb-2">
+                <div class="flex gap-px items-end" style="height:248px; padding: 0 0 32px 52px">
+                  <div id="skel-bars" class="flex gap-px items-end flex-1 h-full"></div>
+                </div>
+                <div class="flex justify-between px-12 mt-1">
+                  <div class="skeleton h-2.5 w-8 rounded"></div>
+                  <div class="skeleton h-2.5 w-8 rounded"></div>
+                  <div class="skeleton h-2.5 w-8 rounded"></div>
+                  <div class="skeleton h-2.5 w-8 rounded"></div>
+                  <div class="skeleton h-2.5 w-8 rounded"></div>
+                  <div class="skeleton h-2.5 w-8 rounded"></div>
+                </div>
+              </div>
+
+              <!-- No-data state -->
+              <div id="chart-nodata" class="hidden flex flex-col items-center justify-center py-16">
+                <svg class="w-14 h-14 mb-3 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+                </svg>
+                <p class="text-sm font-medium text-slate-500 mt-1">No data available</p>
+                <p class="text-xs text-slate-400 mt-1">Try selecting a different time range</p>
+              </div>
+            </div>
+
+            <!-- Chart footer -->
+            <div id="chart-footer" class="flex items-center justify-between px-5 py-2 border-t border-slate-100 bg-slate-50/60">
+              <span id="chart-res-label" class="text-[11px] text-slate-400"></span>
+              <span class="text-[11px] text-slate-400">Updated 4:00 PM ET</span>
+            </div>
+          </div>
+          <!-- ── END CHART PANEL ─────────────────────────────── -->
+
+          <!-- TSLA row -->
+          <div class="stock-row flex items-center px-5 py-3 border-b border-slate-100 cursor-pointer">
+            <span class="w-20 text-sm font-semibold text-slate-900">TSLA</span>
+            <span class="flex-1 hidden sm:block text-xs text-slate-400 truncate">Tesla, Inc.</span>
+            <span class="w-28 text-right text-sm font-semibold text-slate-900 tabular-nums">$245.18</span>
+            <span class="w-20 text-right text-xs font-medium text-red-500 tabular-nums">−3.42</span>
+            <span class="w-20 text-right text-xs font-medium text-red-500 tabular-nums hidden md:block">▼ −1.38%</span>
+            <button type="button" aria-label="Remove TSLA" onclick="event.stopPropagation()"
+              class="w-8 flex items-center justify-center text-slate-300 hover:text-red-400 transition-colors ml-1">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- NVDA row -->
+          <div class="stock-row flex items-center px-5 py-3 border-b border-slate-100 cursor-pointer">
+            <span class="w-20 text-sm font-semibold text-slate-900">NVDA</span>
+            <span class="flex-1 hidden sm:block text-xs text-slate-400 truncate">NVIDIA Corporation</span>
+            <span class="w-28 text-right text-sm font-semibold text-slate-900 tabular-nums">$872.34</span>
+            <span class="w-20 text-right text-xs font-medium text-green-600 tabular-nums">+12.40</span>
+            <span class="w-20 text-right text-xs font-medium text-green-600 tabular-nums hidden md:block">▲ +1.44%</span>
+            <button type="button" aria-label="Remove NVDA" onclick="event.stopPropagation()"
+              class="w-8 flex items-center justify-center text-slate-300 hover:text-red-400 transition-colors ml-1">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- MSFT row -->
+          <div class="stock-row flex items-center px-5 py-3 cursor-pointer">
+            <span class="w-20 text-sm font-semibold text-slate-900">MSFT</span>
+            <span class="flex-1 hidden sm:block text-xs text-slate-400 truncate">Microsoft Corporation</span>
+            <span class="w-28 text-right text-sm font-semibold text-slate-900 tabular-nums">$418.92</span>
+            <span class="w-20 text-right text-xs font-medium text-red-500 tabular-nums">−2.10</span>
+            <span class="w-20 text-right text-xs font-medium text-red-500 tabular-nums hidden md:block">▼ −0.50%</span>
+            <button type="button" aria-label="Remove MSFT" onclick="event.stopPropagation()"
+              class="w-8 flex items-center justify-center text-slate-300 hover:text-red-400 transition-colors ml-1">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+        </div><!-- /watchlist card -->
+      </div><!-- /max-w -->
+    </main>
+
+  </div><!-- /main content -->
+</div><!-- /app shell -->
+
+<script>
+// ─── Seeded LCG PRNG ──────────────────────────────────────────────────────────
+function makePrng(seed) {
+  var s = seed >>> 0;
+  return function() {
+    s = ((s * 1664525 + 1013904223) >>> 0) & 0x7fffffff;
+    return s / 0x7fffffff;
+  };
+}
+
+// ─── Candle generator ─────────────────────────────────────────────────────────
+function genCandles(startTs, intervalSec, count, basePrice, seed) {
+  var rand = makePrng(seed);
+  var candles = [];
+  var price = basePrice;
+  for (var i = 0; i < count; i++) {
+    var open  = Math.round(price * 100) / 100;
+    var move  = (rand() - 0.5) * basePrice * 0.012;
+    var close = Math.round((open + move) * 100) / 100;
+    var high  = Math.round((Math.max(open, close) + rand() * basePrice * 0.004) * 100) / 100;
+    var low   = Math.round((Math.min(open, close) - rand() * basePrice * 0.004) * 100) / 100;
+    var vol   = Math.round(40000 + rand() * 220000);
+    candles.push({ o: open, h: high, l: low, c: close, t: startTs + i * intervalSec, v: vol });
+    price = close;
+  }
+  return candles;
+}
+
+// 2026-04-02 09:30 AM ET = 13:30 UTC
+var MO = 1775136600;
+
+var CANDLE_DATA = {
+  '1D': genCandles(MO,             5*60,  78,  187.5, 1001),
+  '1W': genCandles(MO - 6*86400,   3600,  42,  185.0, 1002),
+  '1M': genCandles(MO - 29*86400, 86400,  22,  180.0, 1003),
+};
+
+var CHART_META = {
+  '1D': { label: '2026-04-02 · 5-min bars · 78 candles' },
+  '1W': { label: 'Mar 27 – Apr 2, 2026 · 1-hr bars · 42 candles' },
+  '1M': { label: 'Mar 2 – Apr 2, 2026 · Daily bars · 22 candles' },
+};
+
+// ─── Layout state (set during drawChart, read during hover) ──────────────────
+var layout = { ML:58, MR:12, MT:16, MB:38, CW:0, CH:0, slotW:0, yLo:0, yHi:0 };
+var currentRange = '1D';
+var chartOpen    = true;
+
+// ─── Format helpers ───────────────────────────────────────────────────────────
+function fmtP(p) { return '$' + p.toFixed(2); }
+function fmtV(v) {
+  if (v >= 1e6) return (v/1e6).toFixed(1) + 'M';
+  if (v >= 1e3) return (v/1e3).toFixed(1) + 'K';
+  return String(v);
+}
+function fmtTime(ts, range) {
+  var d = new Date(ts * 1000);
+  if (range === '1D') {
+    var minET = d.getUTCHours() * 60 + d.getUTCMinutes() - 240; // UTC-4
+    var h = Math.floor(minET / 60);
+    var m = minET % 60;
+    var ampm = h >= 12 ? 'PM' : 'AM';
+    var h12  = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+    return h12 + ':' + (m < 10 ? '0' + m : m) + ' ' + ampm + ' ET';
+  }
+  var mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return mon[d.getUTCMonth()] + ' ' + d.getUTCDate() + ', ' + d.getUTCFullYear();
+}
+
+// ─── X-axis labels ────────────────────────────────────────────────────────────
+function xLabels(candles, range) {
+  var labels = [];
+  var mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  if (range === '1D') {
+    for (var i = 0; i < candles.length; i++) {
+      var d = new Date(candles[i].t * 1000);
+      if (d.getUTCMinutes() === 0) {
+        var hET = d.getUTCHours() - 4;
+        if (hET >= 10 && hET <= 16) {
+          var ampm = hET >= 12 ? 'PM' : 'AM';
+          var h12  = hET > 12 ? hET - 12 : hET;
+          labels.push({ i: i, text: h12 + ampm });
+        }
+      }
+    }
+  } else if (range === '1W') {
+    var lastDay = -1;
+    for (var i = 0; i < candles.length; i++) {
+      var d = new Date(candles[i].t * 1000);
+      var day = d.getUTCDate();
+      if (day !== lastDay) {
+        labels.push({ i: i, text: mon[d.getUTCMonth()] + ' ' + day });
+        lastDay = day;
+      }
+    }
+  } else {
+    for (var i = 0; i < candles.length; i += 5) {
+      var d = new Date(candles[i].t * 1000);
+      labels.push({ i: i, text: mon[d.getUTCMonth()] + ' ' + d.getUTCDate() });
+    }
+    // Always include last candle's label
+    var last = candles.length - 1;
+    if (last % 5 !== 0) {
+      var d = new Date(candles[last].t * 1000);
+      labels.push({ i: last, text: mon[d.getUTCMonth()] + ' ' + d.getUTCDate() });
+    }
+  }
+  return labels;
+}
+
+// ─── Main draw function ───────────────────────────────────────────────────────
+function drawChart(range) {
+  var candles = CANDLE_DATA[range];
+  var svg     = document.getElementById('candle-svg');
+  var wrapper = document.getElementById('chart-svg-wrap');
+  var W = Math.max(400, wrapper.offsetWidth);
+  var H = 280;
+
+  var ML = 62, MR = 14, MT = 16, MB = 38;
+  var CW = W - ML - MR;
+  var CH = H - MT - MB;
+
+  var allHi = candles.reduce(function(a, c) { return Math.max(a, c.h); }, -Infinity);
+  var allLo = candles.reduce(function(a, c) { return Math.min(a, c.l); },  Infinity);
+  var pad   = (allHi - allLo) * 0.07;
+  var yLo   = allLo - pad;
+  var yHi   = allHi + pad;
+
+  // Cache layout for hover handler
+  layout.ML = ML; layout.MR = MR; layout.MT = MT; layout.MB = MB;
+  layout.CW = CW; layout.CH = CH;
+  layout.yLo = yLo; layout.yHi = yHi;
+  layout.slotW = CW / candles.length;
+
+  var slotW = layout.slotW;
+  var bodyW = Math.max(1.5, slotW * 0.62);
+
+  function xPos(i) { return ML + (i + 0.5) * slotW; }
+  function yPos(p) { return MT + (1 - (p - yLo) / (yHi - yLo)) * CH; }
+
+  var html = '';
+
+  // Y-axis price levels + grid lines
+  var gridN = 5;
+  for (var g = 0; g <= gridN; g++) {
+    var p = yLo + (yHi - yLo) * (g / gridN);
+    var y = yPos(p);
+    html += '<line x1="' + ML + '" y1="' + y.toFixed(1) + '" x2="' + (W - MR).toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="#f1f5f9" stroke-width="1"/>';
+    html += '<text x="' + (ML - 7).toFixed(1) + '" y="' + (y + 3.5).toFixed(1) + '" text-anchor="end" fill="#94a3b8" font-size="10.5" font-family="Inter,system-ui,sans-serif">' + fmtP(p) + '</text>';
+  }
+
+  // Candles
+  for (var i = 0; i < candles.length; i++) {
+    var c   = candles[i];
+    var x   = xPos(i);
+    var up  = c.c >= c.o;
+    var col = up ? '#22c55e' : '#ef4444';
+    var bTop = yPos(Math.max(c.o, c.c));
+    var bBot = yPos(Math.min(c.o, c.c));
+    var bH   = Math.max(1, bBot - bTop);
+
+    // Wick
+    html += '<line x1="' + x.toFixed(1) + '" y1="' + yPos(c.h).toFixed(1) + '" x2="' + x.toFixed(1) + '" y2="' + yPos(c.l).toFixed(1) + '" stroke="' + col + '" stroke-width="1"/>';
+    // Body
+    html += '<rect x="' + (x - bodyW/2).toFixed(1) + '" y="' + bTop.toFixed(1) + '" width="' + bodyW.toFixed(1) + '" height="' + bH.toFixed(1) + '" fill="' + col + '" rx="0.5"/>';
+  }
+
+  // X-axis baseline
+  html += '<line x1="' + ML + '" y1="' + (MT + CH + 0.5).toFixed(1) + '" x2="' + (W - MR).toFixed(1) + '" y2="' + (MT + CH + 0.5).toFixed(1) + '" stroke="#e2e8f0" stroke-width="1"/>';
+
+  // X-axis labels
+  var lbls = xLabels(candles, range);
+  for (var k = 0; k < lbls.length; k++) {
+    var lx = xPos(lbls[k].i);
+    html += '<text x="' + lx.toFixed(1) + '" y="' + (MT + CH + 22).toFixed(1) + '" text-anchor="middle" fill="#94a3b8" font-size="10.5" font-family="Inter,system-ui,sans-serif">' + lbls[k].text + '</text>';
+  }
+
+  // Crosshair lines (hidden until hover)
+  html += '<line id="ch-v" x1="0" y1="' + MT + '" x2="0" y2="' + (MT + CH).toFixed(1) + '" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,2" style="display:none"/>';
+  html += '<line id="ch-h" x1="' + ML + '" y1="0" x2="' + (W - MR).toFixed(1) + '" y2="0" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,2" style="display:none"/>';
+
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svg.innerHTML = html;
+}
+
+// ─── Tooltip + crosshair on hover ─────────────────────────────────────────────
+var overlay = document.getElementById('chart-overlay');
+var tooltip = document.getElementById('chart-tooltip');
+
+overlay.addEventListener('mousemove', function(e) {
+  var candles = CANDLE_DATA[currentRange];
+  var rect = overlay.getBoundingClientRect();
+  var mx   = e.clientX - rect.left;
+  var idx  = Math.max(0, Math.min(candles.length - 1, Math.floor((mx - layout.ML) / layout.slotW)));
+  var c    = candles[idx];
+
+  var cx = layout.ML + (idx + 0.5) * layout.slotW;
+  var cy = layout.MT + (1 - (c.c - layout.yLo) / (layout.yHi - layout.yLo)) * layout.CH;
+
+  // Update crosshair
+  var chV = document.getElementById('ch-v');
+  var chH = document.getElementById('ch-h');
+  if (chV) { chV.setAttribute('x1', cx.toFixed(1)); chV.setAttribute('x2', cx.toFixed(1)); chV.style.display = ''; }
+  if (chH) { chH.setAttribute('y1', cy.toFixed(1)); chH.setAttribute('y2', cy.toFixed(1)); chH.style.display = ''; }
+
+  // Populate tooltip
+  document.getElementById('tt-time').textContent = fmtTime(c.t, currentRange);
+  document.getElementById('tt-o').textContent    = fmtP(c.o);
+  document.getElementById('tt-h').textContent    = fmtP(c.h);
+  document.getElementById('tt-l').textContent    = fmtP(c.l);
+  document.getElementById('tt-c').textContent    = fmtP(c.c);
+  document.getElementById('tt-v').textContent    = fmtV(c.v);
+
+  // Position tooltip (keep within viewport)
+  var tipW = 148, tipH = 110;
+  var tx = e.clientX + 16;
+  var ty = e.clientY - 24;
+  if (tx + tipW > window.innerWidth  - 16) tx = e.clientX - tipW - 16;
+  if (ty + tipH > window.innerHeight - 16) ty = window.innerHeight - tipH - 16;
+  if (ty < 8) ty = 8;
+  tooltip.style.left = tx + 'px';
+  tooltip.style.top  = ty + 'px';
+  tooltip.classList.remove('hidden');
+});
+
+overlay.addEventListener('mouseleave', function() {
+  tooltip.classList.add('hidden');
+  var chV = document.getElementById('ch-v');
+  var chH = document.getElementById('ch-h');
+  if (chV) chV.style.display = 'none';
+  if (chH) chH.style.display = 'none';
+});
+
+// ─── Range tab selection ──────────────────────────────────────────────────────
+function selectRange(range) {
+  currentRange = range;
+  ['1D','1W','1M'].forEach(function(r) {
+    var btn = document.getElementById('tab-' + r.toLowerCase());
+    if (!btn) return;
+    var active = r === range;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+  var meta = CHART_META[range];
+  document.getElementById('chart-res-label').textContent = meta.label;
+  drawChart(range);
+}
+
+// ─── Toggle chart open / closed ───────────────────────────────────────────────
+function toggleChart() {
+  chartOpen = !chartOpen;
+  var wrap    = document.getElementById('chart-panel-wrap');
+  var row     = document.getElementById('aapl-row');
+  var chevron = document.getElementById('aapl-chevron');
+  if (chartOpen) {
+    wrap.classList.remove('closed'); wrap.classList.add('open');
+    row.classList.add('selected');
+    chevron.style.transform = 'rotate(180deg)';
+    showLoaded();
+    drawChart(currentRange);
+  } else {
+    wrap.classList.add('closed'); wrap.classList.remove('open');
+    row.classList.remove('selected');
+    chevron.style.transform = 'rotate(0deg)';
+    tooltip.classList.add('hidden');
+  }
+}
+
+// ─── Show helpers ─────────────────────────────────────────────────────────────
+function showLoaded() {
+  document.getElementById('chart-svg-wrap').style.display = '';
+  document.getElementById('chart-skeleton').classList.add('hidden');
+  document.getElementById('chart-nodata').classList.add('hidden');
+  document.getElementById('chart-footer').style.display = '';
+  overlay.style.pointerEvents = '';
+}
+function showSkeleton() {
+  document.getElementById('chart-svg-wrap').style.display = 'none';
+  document.getElementById('chart-skeleton').classList.remove('hidden');
+  document.getElementById('chart-nodata').classList.add('hidden');
+  document.getElementById('chart-footer').style.display = '';
+  overlay.style.pointerEvents = 'none';
+}
+function showNoData() {
+  document.getElementById('chart-svg-wrap').style.display = 'none';
+  document.getElementById('chart-skeleton').classList.add('hidden');
+  document.getElementById('chart-nodata').classList.remove('hidden');
+  document.getElementById('chart-footer').style.display = 'none';
+  overlay.style.pointerEvents = 'none';
+}
+
+// ─── State switcher ───────────────────────────────────────────────────────────
+function applyState(state) {
+  document.querySelectorAll('.state-btn').forEach(function(btn) {
+    var active = btn.dataset.state === state;
+    btn.classList.toggle('bg-brand-500', active);
+    btn.classList.toggle('text-white',   active);
+    btn.classList.toggle('text-slate-600', !active);
+  });
+
+  var wrap    = document.getElementById('chart-panel-wrap');
+  var row     = document.getElementById('aapl-row');
+  var chevron = document.getElementById('aapl-chevron');
+
+  function openPanel() {
+    chartOpen = true;
+    wrap.classList.remove('closed'); wrap.classList.add('open');
+    row.classList.add('selected');
+    chevron.style.transform = 'rotate(180deg)';
+  }
+
+  switch (state) {
+    case 'chart-1d':
+      openPanel(); showLoaded(); selectRange('1D'); break;
+    case 'loading':
+      openPanel(); showSkeleton();
+      document.getElementById('chart-res-label').textContent = CHART_META['1D'].label;
+      break;
+    case 'chart-1w':
+      openPanel(); showLoaded(); selectRange('1W'); break;
+    case 'chart-1m':
+      openPanel(); showLoaded(); selectRange('1M'); break;
+    case 'no-data':
+      openPanel(); showNoData(); break;
+    case 'chart-closed':
+      chartOpen = false;
+      wrap.classList.add('closed'); wrap.classList.remove('open');
+      row.classList.remove('selected');
+      chevron.style.transform = 'rotate(0deg)';
+      tooltip.classList.add('hidden');
+      break;
+  }
+}
+
+// ─── Skeleton bars (generated dynamically) ────────────────────────────────────
+function buildSkeletonBars() {
+  var heights = [55,70,60,80,45,65,75,50,85,60,40,70,55,90,65,75,50,60,80,45,70,55,65,75,85,50,60,70,40,55,75,65,80,45,90,60,55,70,50,65,75,45,80,55,60,70,85,50,40,65];
+  var container = document.getElementById('skel-bars');
+  if (!container) return;
+  container.innerHTML = heights.map(function(h) {
+    return '<div class="skeleton flex-1" style="height:' + h + '%"></div>';
+  }).join('');
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  buildSkeletonBars();
+
+  // Set initial switcher button style
+  document.querySelectorAll('.state-btn').forEach(function(btn) {
+    btn.classList.add('text-slate-600');
+    if (btn.dataset.state === 'chart-1d') {
+      btn.classList.add('bg-brand-500', 'text-white');
+      btn.classList.remove('text-slate-600');
+    }
+  });
+
+  selectRange('1D');
+});
+
+// Redraw on resize
+var resizeTimer;
+window.addEventListener('resize', function() {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(function() {
+    if (chartOpen) {
+      var svgWrap = document.getElementById('chart-svg-wrap');
+      if (svgWrap && svgWrap.style.display !== 'none') drawChart(currentRange);
+    }
+  }, 120);
+});
+</script>
+</body>
+</html>

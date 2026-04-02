@@ -99,6 +99,21 @@ export interface Notification {
   createdAt: string
 }
 
+// ─── Chart / Candle DTOs ─────────────────────────────────────────────────────
+
+/** Mirrors Finnhub /stock/candle response shape */
+export interface CandleDto {
+  c: number[] // close prices
+  h: number[] // high prices
+  l: number[] // low prices
+  o: number[] // open prices
+  s: 'ok' | 'no_data'
+  t: number[] // unix timestamps (seconds)
+  v: number[] // volumes
+}
+
+export type ChartRange = '1D' | '1W' | '1M'
+
 // ─── Chat DTOs ────────────────────────────────────────────────────────────────
 
 export interface ChatMessage {
