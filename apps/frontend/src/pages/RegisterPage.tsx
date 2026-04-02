@@ -41,6 +41,7 @@ export function RegisterPage() {
     formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const passwordValue = watch('password') ?? ''
   const strength = passwordStrength(passwordValue)
 

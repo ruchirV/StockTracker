@@ -63,10 +63,7 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(
-    @Req() req: Request,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<AuthResponse> {
+  login(@Req() req: Request, @Res({ passthrough: true }) res: Response): AuthResponse {
     const pair = req.user as TokenPair
     setRefreshCookie(res, pair.refreshToken)
     return toAuthResponse(pair)

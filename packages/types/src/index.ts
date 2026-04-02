@@ -27,6 +27,34 @@ export interface UserDto {
 
 // ─── Watchlist DTOs ───────────────────────────────────────────────────────────
 
+export interface WatchlistItemDto {
+  id: string
+  symbol: string
+  addedAt: string
+  /** Populated from Redis cache — null if no tick received yet */
+  latestPrice: PriceTick | null
+}
+
+export interface AddToWatchlistDto {
+  symbol: string
+}
+
+// ─── WebSocket message types ─────────────────────────────────────────────────
+
+/** Server → Client */
+export type WsServerMessage =
+  | { type: 'connected' }
+  | { type: 'price'; symbol: string; price: number; change: number; changePercent: number; timestamp: number }
+  | { type: 'status'; finnhubConnected: boolean }
+  | { type: 'ping' }
+
+/** Client → Server */
+export type WsClientMessage =
+  | { type: 'subscribe'; symbols: string[] }
+  | { type: 'unsubscribe'; symbols: string[] }
+  | { type: 'pong' }
+
+/** @deprecated Use WatchlistItemDto */
 export interface WatchlistItem {
   id: string
   symbol: string

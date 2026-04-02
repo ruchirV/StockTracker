@@ -1,12 +1,23 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAuthStore } from '@/stores/authStore'
 import { useLogout } from '@/hooks/useAuth'
+import { WSStatusDot } from '@/components/WSStatusDot'
+import { WatchlistPanel } from '@/components/watchlist/WatchlistPanel'
+import { wsClient } from '@/lib/wsClient'
 
 export function DashboardPage() {
   const user = useAuthStore((s) => s.user)
   const { mutate: logout, isPending: isLoggingOut } = useLogout()
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  // Connect WebSocket when dashboard mounts
+  useEffect(() => {
+    wsClient.connect()
+    return () => {
+      // Don't disconnect on unmount — wsClient is a singleton and will auto-reconnect
+    }
+  }, [])
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -29,6 +40,8 @@ export function DashboardPage() {
         </div>
 
         <div className="flex items-center gap-4">
+          <WSStatusDot />
+
           {/* Notification bell — placeholder */}
           <button
             type="button"
@@ -98,22 +111,9 @@ export function DashboardPage() {
       </header>
 
       {/* Main */}
-      <main className="flex flex-1 items-center justify-center p-8">
-        <div className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
-            <ChartIcon />
-          </div>
-          <h2 className="text-xl font-semibold text-gray-800">Your watchlist is empty</h2>
-          <p className="mt-2 text-sm text-gray-500">Add stocks to your watchlist to get started.</p>
-          <button
-            type="button"
-            disabled
-            aria-label="Browse stocks (coming in Phase 2)"
-            className="mt-6 rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white opacity-40 cursor-not-allowed"
-          >
-            Browse Stocks
-          </button>
-          <p className="mt-2 text-xs text-gray-400">Live prices coming in Phase 2</p>
+      <main className="flex-1 p-6">
+        <div className="mx-auto max-w-3xl">
+          <WatchlistPanel />
         </div>
       </main>
     </div>
@@ -168,25 +168,6 @@ function ChevronIcon() {
       aria-hidden="true"
     >
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-    </svg>
-  )
-}
-
-function ChartIcon() {
-  return (
-    <svg
-      className="h-8 w-8 text-blue-500"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
-      />
     </svg>
   )
 }

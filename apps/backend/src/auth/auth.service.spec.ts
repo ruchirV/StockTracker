@@ -154,7 +154,7 @@ describe('AuthService', () => {
       const result = await service.refresh(mockRefreshToken)
 
       expect(mockPrismaService.refreshToken.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: { revokedAt: expect.any(Date) } }),
+        expect.objectContaining({ data: { revokedAt: expect.any(Date) as unknown as Date } }),
       )
       expect(result.accessToken).toBeDefined()
     })
@@ -197,7 +197,7 @@ describe('AuthService', () => {
       await service.logout(mockRefreshToken)
 
       expect(mockPrismaService.refreshToken.updateMany).toHaveBeenCalledWith(
-        expect.objectContaining({ data: { revokedAt: expect.any(Date) } }),
+        expect.objectContaining({ data: { revokedAt: expect.any(Date) as unknown as Date } }),
       )
     })
   })

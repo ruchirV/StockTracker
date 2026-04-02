@@ -1,12 +1,14 @@
 import { NestFactory } from '@nestjs/core'
 import { ValidationPipe } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { WsAdapter } from '@nestjs/platform-ws'
 import helmet from 'helmet'
 import cookieParser from 'cookie-parser'
 import { AppModule } from './app.module'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
+  app.useWebSocketAdapter(new WsAdapter(app))
   const config = app.get(ConfigService)
 
   // Security headers
@@ -35,4 +37,4 @@ async function bootstrap() {
   console.log(`Backend running on http://localhost:${port}`)
 }
 
-bootstrap()
+void bootstrap()

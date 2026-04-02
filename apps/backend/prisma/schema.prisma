@@ -16,9 +16,20 @@ model User {
   isAdmin      Boolean       @default(false)
   createdAt    DateTime      @default(now())
 
-  refreshTokens RefreshToken[]
+  refreshTokens  RefreshToken[]
+  watchlistItems WatchlistItem[]
 
   @@unique([provider, providerId])
+}
+
+model WatchlistItem {
+  id      String   @id @default(cuid())
+  symbol  String
+  userId  String
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addedAt DateTime @default(now())
+
+  @@unique([userId, symbol])
 }
 
 model RefreshToken {
