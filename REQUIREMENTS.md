@@ -19,71 +19,77 @@ The project is designed as a professional portfolio showcase, demonstrating real
 ## 2. Tech Stack
 
 ### Frontend
-| Concern | Choice | Rationale |
-|---|---|---|
-| Framework | React 18 (TypeScript) | Portfolio requirement |
-| Visualizations | D3.js | Portfolio requirement |
-| Data fetching / caching | React Query (TanStack Query v5) | Async state, background refetch |
-| UI state | Zustand | Lightweight, idiomatic |
-| Real-time client | Native WebSocket | Direct control, no socket.io overhead |
-| Styling | Tailwind CSS | Utility-first, accessible defaults |
-| Forms | React Hook Form + Zod | Type-safe validation |
-| Linting | ESLint (typescript-eslint) | Catch type and style errors |
-| Formatting | Prettier | Enforced consistent style |
-| Testing | Vitest + React Testing Library | Matches Vite ecosystem |
-| E2E Testing | Playwright | Cross-browser, async-friendly |
-| Accessibility | WCAG 2.1 AA | Enforced via eslint-plugin-jsx-a11y |
+
+| Concern                 | Choice                          | Rationale                             |
+| ----------------------- | ------------------------------- | ------------------------------------- |
+| Framework               | React 18 (TypeScript)           | Portfolio requirement                 |
+| Visualizations          | D3.js                           | Portfolio requirement                 |
+| Data fetching / caching | React Query (TanStack Query v5) | Async state, background refetch       |
+| UI state                | Zustand                         | Lightweight, idiomatic                |
+| Real-time client        | Native WebSocket                | Direct control, no socket.io overhead |
+| Styling                 | Tailwind CSS                    | Utility-first, accessible defaults    |
+| Forms                   | React Hook Form + Zod           | Type-safe validation                  |
+| Linting                 | ESLint (typescript-eslint)      | Catch type and style errors           |
+| Formatting              | Prettier                        | Enforced consistent style             |
+| Testing                 | Vitest + React Testing Library  | Matches Vite ecosystem                |
+| E2E Testing             | Playwright                      | Cross-browser, async-friendly         |
+| Accessibility           | WCAG 2.1 AA                     | Enforced via eslint-plugin-jsx-a11y   |
 
 ### Backend
-| Concern | Choice | Rationale |
-|---|---|---|
-| Runtime | Node.js (TypeScript) | Unified language across stack |
-| Framework | NestJS | DI, guards, decorators, WebSocket gateway — better portfolio signal than plain Express |
-| ORM | Prisma | Type-safe DB access, migrations |
-| Database | PostgreSQL | Relational data (users, watchlists, alerts, subscriptions) |
-| Auth | JWT (access + refresh tokens) + Passport.js | Stateless, refresh rotation |
-| Social Auth | OAuth 2.0 via Passport (Google, GitHub) | Portfolio requirement |
-| Real-time | NestJS WebSocket Gateway (ws) | Server → client price pushes |
-| Email | Nodemailer + SendGrid SMTP | Free tier sufficient |
-| Job queue | BullMQ + Redis | Price alert evaluation, email dispatch |
-| LLM abstraction | Custom provider-agnostic adapter | Swap OpenAI / Anthropic / etc. |
-| SAST | SonarCloud (free for public repos) + GitHub CodeQL | Code security analysis |
-| Secrets management | AWS Secrets Manager / Azure Key Vault | Environment-specific |
+
+| Concern            | Choice                                             | Rationale                                                                              |
+| ------------------ | -------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Runtime            | Node.js (TypeScript)                               | Unified language across stack                                                          |
+| Framework          | NestJS                                             | DI, guards, decorators, WebSocket gateway — better portfolio signal than plain Express |
+| ORM                | Prisma                                             | Type-safe DB access, migrations                                                        |
+| Database           | PostgreSQL                                         | Relational data (users, watchlists, alerts, subscriptions)                             |
+| Auth               | JWT (access + refresh tokens) + Passport.js        | Stateless, refresh rotation                                                            |
+| Social Auth        | OAuth 2.0 via Passport (Google, GitHub)            | Portfolio requirement                                                                  |
+| Real-time          | NestJS WebSocket Gateway (ws)                      | Server → client price pushes                                                           |
+| Email              | Nodemailer + SendGrid SMTP                         | Free tier sufficient                                                                   |
+| Job queue          | BullMQ + Redis                                     | Price alert evaluation, email dispatch                                                 |
+| LLM abstraction    | Custom provider-agnostic adapter                   | Swap OpenAI / Anthropic / etc.                                                         |
+| SAST               | SonarCloud (free for public repos) + GitHub CodeQL | Code security analysis                                                                 |
+| Secrets management | AWS Secrets Manager / Azure Key Vault              | Environment-specific                                                                   |
 
 ### Stock Data API
+
 **Primary:** [Finnhub](https://finnhub.io)
+
 - Free tier: 60 REST calls/min, WebSocket real-time quotes (US stocks)
 - Used for: live price feed (WebSocket), company fundamentals, news
 - Rate-limit handling required in backend — clients must not call Finnhub directly
 
 **Secondary (historical candles):** Finnhub REST `/stock/candle`
+
 - Used for: 1D / 1W / 1M OHLCV chart data
 
 > **Constraint:** Free API tiers impose rate limits. The backend must cache aggressively (Redis) and gracefully degrade (stale data with a staleness indicator) when limits are hit.
 
 ### Infrastructure
-| Concern | Choice |
-|---|---|
-| Cloud | AWS (primary) or Azure |
-| Containers | Docker |
-| Orchestration | AWS ECS Fargate (or AKS on Azure) |
-| CI/CD | GitHub Actions |
-| IaC | Terraform |
+
+| Concern                | Choice                                         |
+| ---------------------- | ---------------------------------------------- |
+| Cloud                  | AWS (primary) or Azure                         |
+| Containers             | Docker                                         |
+| Orchestration          | AWS ECS Fargate (or AKS on Azure)              |
+| CI/CD                  | GitHub Actions                                 |
+| IaC                    | Terraform                                      |
 | CDN / Frontend hosting | AWS CloudFront + S3 (or Azure Static Web Apps) |
-| Database hosting | AWS RDS PostgreSQL |
-| Cache | AWS ElastiCache (Redis) |
-| Monitoring | AWS CloudWatch + structured logging (Pino) |
+| Database hosting       | AWS RDS PostgreSQL                             |
+| Cache                  | AWS ElastiCache (Redis)                        |
+| Monitoring             | AWS CloudWatch + structured logging (Pino)     |
 
 ---
 
 ## 3. User Roles
 
-| Role | Access |
-|---|---|
-| **Guest** | View public landing page only |
-| **Free user** | Watchlist (unlimited stocks), live prices, historical charts, price alerts (email + in-app) |
-| **Premium user** | All free features + AI portfolio chatbot |
-| **Admin** | Toggle premium status for any user |
+| Role             | Access                                                                                      |
+| ---------------- | ------------------------------------------------------------------------------------------- |
+| **Guest**        | View public landing page only                                                               |
+| **Free user**    | Watchlist (unlimited stocks), live prices, historical charts, price alerts (email + in-app) |
+| **Premium user** | All free features + AI portfolio chatbot                                                    |
+| **Admin**        | Toggle premium status for any user                                                          |
 
 ---
 
@@ -142,8 +148,9 @@ The project is designed as a professional portfolio showcase, demonstrating real
 **FR-ALERT-01** — Users can set an upper price threshold and/or a lower price threshold for any stock on their watchlist.  
 **FR-ALERT-02** — Multiple independent alerts can exist for the same stock (e.g. upper $200, lower $150).  
 **FR-ALERT-03** — When a live price crosses a configured threshold, the system:
-  - Sends an email notification to the user's registered address.
-  - Pushes an in-app notification (toast + notification bell count) to the user if they are online.  
+
+- Sends an email notification to the user's registered address.
+- Pushes an in-app notification (toast + notification bell count) to the user if they are online.
 
 **FR-ALERT-04** — An alert fires at most once per crossing event. It is deactivated after firing and must be manually re-enabled.  
 **FR-ALERT-05** — Users can view, edit, enable, disable, and delete their alerts from a dedicated Alerts panel.  
@@ -168,9 +175,10 @@ The project is designed as a professional portfolio showcase, demonstrating real
 **FR-CHAT-02** — The chatbot is accessible from a slide-in panel available on any page.  
 **FR-CHAT-03** — Each conversation is scoped: the user selects a company from their watchlist before starting. The chatbot is focused on financial topics (company fundamentals, portfolio performance, market context).  
 **FR-CHAT-04** — At the start of each conversation, the backend assembles a context payload and injects it into the system prompt. This context includes:
-  - User's current watchlist (tickers, current prices, day change)
-  - Selected company name, ticker, latest price, fundamentals (if available from Finnhub)
-  - User's active alerts for the selected stock  
+
+- User's current watchlist (tickers, current prices, day change)
+- Selected company name, ticker, latest price, fundamentals (if available from Finnhub)
+- User's active alerts for the selected stock
 
 **FR-CHAT-05** — The chatbot must politely decline and redirect if the user asks about topics outside financial/company scope.  
 **FR-CHAT-06** — The LLM provider is abstracted behind an adapter interface. Switching providers (e.g. OpenAI → Anthropic) requires only a new adapter and an environment variable change, not code changes to the chatbot feature.  
@@ -182,12 +190,14 @@ The project is designed as a professional portfolio showcase, demonstrating real
 ## 5. Non-Functional Requirements
 
 ### 5.1 Performance
+
 - **NFR-PERF-01** — Watchlist with 200+ stocks must render without jank; virtualised list (TanStack Virtual) required.
 - **NFR-PERF-02** — Initial page load (LCP) target: under 2.5 seconds on a standard broadband connection.
 - **NFR-PERF-03** — Live price updates must be applied to the UI within 500 ms of the server receiving the Finnhub event.
 - **NFR-PERF-04** — Historical chart data must load within 1 second (cached) or 3 seconds (cold).
 
 ### 5.2 Security
+
 - **NFR-SEC-01** — All HTTP traffic served over HTTPS/TLS. No mixed content.
 - **NFR-SEC-02** — API keys and secrets stored in cloud secret manager, never in code or environment files committed to git.
 - **NFR-SEC-03** — All user inputs validated and sanitised on the server (Zod schemas).
@@ -199,6 +209,7 @@ The project is designed as a professional portfolio showcase, demonstrating real
 - **NFR-SEC-09** — LLM prompts must be constructed server-side only. User input must not be able to override the system prompt (prompt injection mitigation).
 
 ### 5.3 Accessibility (WCAG 2.1 AA)
+
 - **NFR-A11Y-01** — All interactive elements are keyboard accessible with visible focus indicators.
 - **NFR-A11Y-02** — All images and icons have meaningful `alt` text or `aria-label`.
 - **NFR-A11Y-03** — Color is not the sole means of conveying information (price change labels include text/icon alongside color).
@@ -207,6 +218,7 @@ The project is designed as a professional portfolio showcase, demonstrating real
 - **NFR-A11Y-06** — `eslint-plugin-jsx-a11y` must report zero errors in CI.
 
 ### 5.4 Code Quality
+
 - **NFR-CQ-01** — TypeScript strict mode enabled across frontend and backend.
 - **NFR-CQ-02** — ESLint must report zero errors on CI; warnings treated as errors on the main branch.
 - **NFR-CQ-03** — Prettier enforced as a pre-commit hook (Husky + lint-staged).
@@ -215,6 +227,7 @@ The project is designed as a professional portfolio showcase, demonstrating real
 - **NFR-CQ-06** — No `any` types without explicit `// eslint-disable` comment and justification.
 
 ### 5.5 Scalability & Reliability
+
 - **NFR-SCALE-01** — Backend designed to run as multiple stateless instances behind a load balancer.
 - **NFR-SCALE-02** — WebSocket connections managed with Redis Pub/Sub so that price pushes work across multiple backend instances.
 - **NFR-SCALE-03** — Database connection pooling via Prisma connection pool.
@@ -254,11 +267,12 @@ Deploy to Production  (manual approval gate)
 ```
 
 ### Environments
-| Environment | Trigger | Purpose |
-|---|---|---|
-| `dev` | Every push to feature branch | Developer testing |
-| `staging` | Merge to `main` | Integration testing, QA |
-| `production` | Manual approval after staging | Live |
+
+| Environment  | Trigger                       | Purpose                 |
+| ------------ | ----------------------------- | ----------------------- |
+| `dev`        | Every push to feature branch  | Developer testing       |
+| `staging`    | Merge to `main`               | Integration testing, QA |
+| `production` | Manual approval after staging | Live                    |
 
 ---
 
@@ -287,19 +301,20 @@ Application Load Balancer
 
 ## 8. Database — High-Level Entities
 
-| Entity | Key Fields |
-|---|---|
-| `users` | id, email, password_hash, provider, provider_id, is_premium, is_admin, created_at |
-| `watchlist_items` | id, user_id, symbol, added_at |
-| `price_alerts` | id, user_id, symbol, upper_threshold, lower_threshold, is_active, fired_at |
-| `notifications` | id, user_id, alert_id, message, is_read, created_at |
-| `refresh_tokens` | id, user_id, token_hash, expires_at, revoked_at |
+| Entity            | Key Fields                                                                        |
+| ----------------- | --------------------------------------------------------------------------------- |
+| `users`           | id, email, password_hash, provider, provider_id, is_premium, is_admin, created_at |
+| `watchlist_items` | id, user_id, symbol, added_at                                                     |
+| `price_alerts`    | id, user_id, symbol, upper_threshold, lower_threshold, is_active, fired_at        |
+| `notifications`   | id, user_id, alert_id, message, is_read, created_at                               |
+| `refresh_tokens`  | id, user_id, token_hash, expires_at, revoked_at                                   |
 
 ---
 
 ## 9. Delivery Phases
 
 ### Phase 1 — Foundation (Auth + Basic Dashboard)
+
 - Project scaffolding: monorepo structure, ESLint, Prettier, Husky, TypeScript strict
 - NestJS backend bootstrapped with auth module (email/password + OAuth)
 - JWT access + refresh token flow
@@ -307,6 +322,7 @@ Application Load Balancer
 - Basic dashboard shell with empty watchlist
 
 ### Phase 2 — Live Data & Watchlist
+
 - Finnhub WebSocket integration (server side)
 - WebSocket gateway (server → client price pushes)
 - Stock search + add/remove watchlist
@@ -314,6 +330,7 @@ Application Load Balancer
 - Virtualised list for performance
 
 ### Phase 3 — Historical Charts
+
 - Finnhub historical candle API integration
 - D3 candlestick + line chart component
 - 1D / 1W / 1M time range switching
@@ -321,12 +338,14 @@ Application Load Balancer
 - Chart accessibility (ARIA, keyboard nav)
 
 ### Phase 4 — Alerts & Notifications
+
 - Alert CRUD (upper/lower thresholds)
 - BullMQ alert evaluation worker
 - Email notifications (SendGrid/Nodemailer)
 - In-app notification system (WebSocket push + notification panel)
 
 ### Phase 5 — Premium AI Chatbot
+
 - LLM provider adapter (OpenAI adapter as default implementation)
 - Premium guard (NestJS route/gateway guard)
 - Chat panel UI with streaming response support
@@ -334,6 +353,7 @@ Application Load Balancer
 - Prompt injection mitigation
 
 ### Phase 6 — CI/CD, Cloud Deploy & Hardening
+
 - GitHub Actions pipeline (all stages)
 - Dockerfiles (frontend + backend)
 - Terraform modules (ECS/AKS, RDS, Redis, ALB, CDN)

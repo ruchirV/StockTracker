@@ -10,6 +10,7 @@ export interface LoginDto {
   password: string
 }
 
+/** Refresh token travels as an httpOnly cookie — never in the response body */
 export interface AuthResponse {
   accessToken: string
   user: UserDto
@@ -20,7 +21,8 @@ export interface UserDto {
   email: string
   isPremium: boolean
   isAdmin: boolean
-  provider: 'local' | 'google' | 'github' | null
+  /** Matches Prisma AuthProvider enum casing */
+  provider: 'GOOGLE' | 'GITHUB' | null
 }
 
 // ─── Watchlist DTOs ───────────────────────────────────────────────────────────

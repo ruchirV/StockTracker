@@ -9,23 +9,23 @@
 
 Phase 1 is complete when **all** of the following scenarios pass end-to-end in the local dev environment:
 
-| # | Scenario | Expected Result |
-|---|---|---|
-| M1 | `POST /auth/register` with email + password | `201` + `{ accessToken, refreshToken, user }` |
-| M2 | `POST /auth/login` with same credentials | `200` + `{ accessToken, refreshToken, user }` |
-| M3 | `GET /auth/me` with valid access token | `200` + user object |
-| M4 | `GET /auth/me` with expired access token | `401 Unauthorized` |
-| M5 | `POST /auth/refresh` with valid refresh token | `200` + new access + refresh token pair |
-| M6 | `POST /auth/logout` with refresh token | `200`; subsequent `POST /auth/refresh` returns `401` |
-| M7 | `POST /auth/login` with wrong password | `401` with generic message (no user enumeration) |
-| M8 | Google OAuth flow in browser | Redirects → consent → callback → sets tokens → lands on dashboard |
-| M9 | GitHub OAuth flow in browser | Same as M8 |
-| M10 | Navigate to `/dashboard` unauthenticated | Redirected to `/login` |
-| M11 | Navigate to `/dashboard` with valid session | Dashboard shell renders with user's email visible |
-| M12 | Click logout button | Tokens cleared; redirect to `/login`; back button does not restore session |
-| M13 | `POST /auth/register` with duplicate email | `409 Conflict` |
-| M14 | `POST /auth/register` with invalid email/short password | `400` with validation error details |
-| M15 | ESLint + Prettier + `tsc --noEmit` all pass with zero errors | CI green |
+| #   | Scenario                                                     | Expected Result                                                            |
+| --- | ------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| M1  | `POST /auth/register` with email + password                  | `201` + `{ accessToken, refreshToken, user }`                              |
+| M2  | `POST /auth/login` with same credentials                     | `200` + `{ accessToken, refreshToken, user }`                              |
+| M3  | `GET /auth/me` with valid access token                       | `200` + user object                                                        |
+| M4  | `GET /auth/me` with expired access token                     | `401 Unauthorized`                                                         |
+| M5  | `POST /auth/refresh` with valid refresh token                | `200` + new access + refresh token pair                                    |
+| M6  | `POST /auth/logout` with refresh token                       | `200`; subsequent `POST /auth/refresh` returns `401`                       |
+| M7  | `POST /auth/login` with wrong password                       | `401` with generic message (no user enumeration)                           |
+| M8  | Google OAuth flow in browser                                 | Redirects → consent → callback → sets tokens → lands on dashboard          |
+| M9  | GitHub OAuth flow in browser                                 | Same as M8                                                                 |
+| M10 | Navigate to `/dashboard` unauthenticated                     | Redirected to `/login`                                                     |
+| M11 | Navigate to `/dashboard` with valid session                  | Dashboard shell renders with user's email visible                          |
+| M12 | Click logout button                                          | Tokens cleared; redirect to `/login`; back button does not restore session |
+| M13 | `POST /auth/register` with duplicate email                   | `409 Conflict`                                                             |
+| M14 | `POST /auth/register` with invalid email/short password      | `400` with validation error details                                        |
+| M15 | ESLint + Prettier + `tsc --noEmit` all pass with zero errors | CI green                                                                   |
 
 ---
 
@@ -158,17 +158,17 @@ sequenceDiagram
 
 ### API Endpoints
 
-| Method | Path | Guard | Description |
-|---|---|---|---|
-| `POST` | `/auth/register` | Public | Register with email + password |
-| `POST` | `/auth/login` | Public | Login with email + password |
-| `POST` | `/auth/refresh` | Public | Exchange refresh token for new pair |
-| `POST` | `/auth/logout` | Public | Revoke refresh token |
-| `GET` | `/auth/me` | JWT | Return current user |
-| `GET` | `/auth/google` | Public | Initiate Google OAuth |
-| `GET` | `/auth/google/callback` | Public | Google OAuth callback |
-| `GET` | `/auth/github` | Public | Initiate GitHub OAuth |
-| `GET` | `/auth/github/callback` | Public | GitHub OAuth callback |
+| Method | Path                    | Guard  | Description                         |
+| ------ | ----------------------- | ------ | ----------------------------------- |
+| `POST` | `/auth/register`        | Public | Register with email + password      |
+| `POST` | `/auth/login`           | Public | Login with email + password         |
+| `POST` | `/auth/refresh`         | Public | Exchange refresh token for new pair |
+| `POST` | `/auth/logout`          | Public | Revoke refresh token                |
+| `GET`  | `/auth/me`              | JWT    | Return current user                 |
+| `GET`  | `/auth/google`          | Public | Initiate Google OAuth               |
+| `GET`  | `/auth/google/callback` | Public | Google OAuth callback               |
+| `GET`  | `/auth/github`          | Public | Initiate GitHub OAuth               |
+| `GET`  | `/auth/github/callback` | Public | GitHub OAuth callback               |
 
 ### Prisma Schema
 
@@ -206,6 +206,7 @@ enum AuthProvider {
 ### Backend Milestones & TODOs
 
 **M1 — Monorepo + NestJS Bootstrap**
+
 - [ ] Initialise Turborepo workspace (`apps/frontend`, `apps/backend`, `packages/types`)
 - [ ] Scaffold NestJS in `apps/backend` (`nest new`)
 - [ ] Configure `tsconfig.json` strict mode in backend
@@ -214,6 +215,7 @@ enum AuthProvider {
 - [ ] Verify `turbo run dev` starts both apps
 
 **M2 — Prisma + Database**
+
 - [ ] Install Prisma, initialise (`prisma init`)
 - [ ] Write schema: `User`, `RefreshToken`, `AuthProvider` enum
 - [ ] Run `prisma migrate dev --name init` → generates SQL migration
@@ -222,6 +224,7 @@ enum AuthProvider {
 - [ ] Add `DATABASE_URL` to `.env` (gitignored) and `.env.example` (committed)
 
 **M3 — Email/Password Auth**
+
 - [ ] Create `AuthModule`, `AuthService`, `AuthController`
 - [ ] Create `UsersModule`, `UsersService`
 - [ ] Implement `register`: validate DTO (Zod), check duplicate email, hash password, create user, issue tokens
@@ -233,6 +236,7 @@ enum AuthProvider {
 - [ ] Write unit tests: `AuthService` (register, login, refresh, logout edge cases)
 
 **M4 — OAuth**
+
 - [ ] Create Google Cloud Console project, OAuth consent screen, client ID + secret
 - [ ] Create GitHub OAuth App, client ID + secret
 - [ ] Install `passport`, `passport-google-oauth20`, `passport-github2`
@@ -242,6 +246,7 @@ enum AuthProvider {
 - [ ] Write integration tests: OAuth callback with mocked Passport profile
 
 **M5 — Validation & Security Hardening**
+
 - [ ] Global `ValidationPipe` with Zod or `class-validator`
 - [ ] Generic error messages on auth failures (no user enumeration)
 - [ ] Helmet middleware (security headers)
@@ -309,14 +314,15 @@ graph LR
 
 **Layout:** Centered card on full-height page.
 
-| Section | Elements |
-|---|---|
-| Header | App logo + "StockTracker" wordmark |
-| Form | Email input, Password input (show/hide toggle), "Sign in" button |
-| OAuth | Divider "or continue with", Google button, GitHub button |
-| Footer | "Don't have an account? Register" link |
+| Section | Elements                                                         |
+| ------- | ---------------------------------------------------------------- |
+| Header  | App logo + "StockTracker" wordmark                               |
+| Form    | Email input, Password input (show/hide toggle), "Sign in" button |
+| OAuth   | Divider "or continue with", Google button, GitHub button         |
+| Footer  | "Don't have an account? Register" link                           |
 
 **States:**
+
 - Default: empty form
 - Loading: button shows spinner, inputs disabled
 - Error: inline error below form ("Invalid email or password" — no specifics)
@@ -330,13 +336,14 @@ graph LR
 
 **Layout:** Same centered card.
 
-| Section | Elements |
-|---|---|
-| Form | Email input, Password input, Confirm password input, "Create account" button |
-| OAuth | Same as login |
-| Footer | "Already have an account? Sign in" link |
+| Section | Elements                                                                     |
+| ------- | ---------------------------------------------------------------------------- |
+| Form    | Email input, Password input, Confirm password input, "Create account" button |
+| OAuth   | Same as login                                                                |
+| Footer  | "Already have an account? Sign in" link                                      |
 
 **States:**
+
 - Password strength indicator (weak / fair / strong)
 - Confirm password mismatch error on blur
 - Duplicate email: `409` surfaces as "An account with this email already exists"
@@ -357,14 +364,15 @@ Invisible to the user — shown only briefly.
 
 **Layout:** Full-height app shell. No stock data yet — only structural chrome.
 
-| Section | Elements |
-|---|---|
-| Header | Logo, "Dashboard" title, notification bell (badge: 0), user avatar + dropdown |
-| User dropdown | User email, "Settings" (placeholder), "Sign out" |
-| Main area | Empty state: icon + "Add stocks to your watchlist to get started" + "Browse Stocks" button (disabled/placeholder) |
-| Sidebar | Collapsed placeholder — will hold watchlist nav in Phase 2 |
+| Section       | Elements                                                                                                          |
+| ------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Header        | Logo, "Dashboard" title, notification bell (badge: 0), user avatar + dropdown                                     |
+| User dropdown | User email, "Settings" (placeholder), "Sign out"                                                                  |
+| Main area     | Empty state: icon + "Add stocks to your watchlist to get started" + "Browse Stocks" button (disabled/placeholder) |
+| Sidebar       | Collapsed placeholder — will hold watchlist nav in Phase 2                                                        |
 
 **States:**
+
 - Loading: skeleton loaders in header and main area while `useCurrentUser` resolves
 - Authenticated: full shell with user info
 
@@ -373,6 +381,7 @@ Invisible to the user — shown only briefly.
 ### Frontend Milestones & TODOs
 
 **M1 — Project Setup**
+
 - [ ] Move existing Vite scaffold into `apps/frontend/`
 - [ ] Update `tsconfig.json` to strict mode
 - [ ] Install and configure: `react-router-dom v6`, `@tanstack/react-query`, `zustand`, `react-hook-form`, `zod`, `tailwindcss`
@@ -382,6 +391,7 @@ Invisible to the user — shown only briefly.
 - [ ] Set up path aliases (`@/` → `src/`)
 
 **M2 — API Client**
+
 - [ ] Create `src/lib/apiClient.ts` — Axios instance with base URL from env var
 - [ ] Add request interceptor: attach `Authorization: Bearer <accessToken>` from Zustand store
 - [ ] Add response interceptor: on `401`, attempt silent token refresh, then retry original request once; on second `401`, call `logout()`
@@ -389,6 +399,7 @@ Invisible to the user — shown only briefly.
 - [ ] Export shared types from `packages/types` (import in both FE and BE)
 
 **M3 — Auth Store + React Query**
+
 - [ ] Implement `useAuthStore` (Zustand): `user`, `accessToken`, `isAuthenticated`, `login()`, `logout()`
 - [ ] Implement `useCurrentUser` query: calls `GET /auth/me` on mount, populates auth store on success
 - [ ] Implement `useLogin`, `useRegister`, `useLogout` mutations
@@ -396,12 +407,14 @@ Invisible to the user — shown only briefly.
 - [ ] Handle session restoration on page reload (call `refresh` endpoint, restore store)
 
 **M4 — Auth Pages**
+
 - [ ] Build `LoginPage`: form, OAuth buttons, validation, error states
 - [ ] Build `RegisterPage`: form, password strength, validation, error states
 - [ ] Build `OAuthCallbackPage`: token extraction, store population, redirect
 - [ ] Write tests: form validation, error display, successful submit flow (mock API)
 
 **M5 — Dashboard Shell**
+
 - [ ] Build `Header` component with user menu and logout
 - [ ] Build `DashboardPage` with empty watchlist state
 - [ ] Add skeleton loading states
@@ -436,7 +449,7 @@ services:
       POSTGRES_USER: stocktracker
       POSTGRES_PASSWORD: localdev
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -449,6 +462,7 @@ Start with: `docker compose -f docker-compose.dev.yml up -d`
 ### Environment Variables
 
 `apps/backend/.env` (gitignored):
+
 ```
 DATABASE_URL=postgresql://stocktracker:localdev@localhost:5432/stocktracker
 JWT_ACCESS_SECRET=<generate: openssl rand -hex 32>
@@ -465,6 +479,7 @@ FRONTEND_URL=http://localhost:5173
 ```
 
 `apps/backend/.env.example` (committed — no real values):
+
 ```
 DATABASE_URL=postgresql://user:password@localhost:5432/stocktracker
 JWT_ACCESS_SECRET=
@@ -475,6 +490,7 @@ JWT_REFRESH_SECRET=
 ### OAuth Local Setup (Prerequisite — Do This First)
 
 **Google:**
+
 1. Go to [console.cloud.google.com](https://console.cloud.google.com) → New Project
 2. APIs & Services → OAuth consent screen → External → fill app name + email
 3. APIs & Services → Credentials → Create OAuth 2.0 Client ID → Web application
@@ -482,6 +498,7 @@ JWT_REFRESH_SECRET=
 5. Copy Client ID + Secret → `.env`
 
 **GitHub:**
+
 1. GitHub → Settings → Developer settings → OAuth Apps → New OAuth App
 2. Homepage URL: `http://localhost:5173`
 3. Authorization callback URL: `http://localhost:3001/auth/github/callback`
@@ -489,14 +506,14 @@ JWT_REFRESH_SECRET=
 
 ### Testing Incremental Work
 
-| What to test | How |
-|---|---|
-| Backend endpoints | `curl` commands or Postman/Bruno collection (committed to `/docs/api/`) |
-| Auth flow end-to-end | Manual browser walkthrough against local stack |
-| Unit tests | `turbo run test` — runs Vitest (FE) + Jest (BE) |
-| Type safety | `turbo run typecheck` — runs `tsc --noEmit` in both apps |
-| Lint | `turbo run lint` — ESLint in both apps |
-| Database state | `npx prisma studio` — visual DB browser on `localhost:5555` |
+| What to test         | How                                                                     |
+| -------------------- | ----------------------------------------------------------------------- |
+| Backend endpoints    | `curl` commands or Postman/Bruno collection (committed to `/docs/api/`) |
+| Auth flow end-to-end | Manual browser walkthrough against local stack                          |
+| Unit tests           | `turbo run test` — runs Vitest (FE) + Jest (BE)                         |
+| Type safety          | `turbo run typecheck` — runs `tsc --noEmit` in both apps                |
+| Lint                 | `turbo run lint` — ESLint in both apps                                  |
+| Database state       | `npx prisma studio` — visual DB browser on `localhost:5555`             |
 
 ### No Cloud Deployment in Phase 1
 
@@ -528,27 +545,27 @@ jobs:
 ```typescript
 // packages/types/src/auth.ts
 export interface RegisterDto {
-  email: string;
-  password: string;
+  email: string
+  password: string
 }
 
 export interface LoginDto {
-  email: string;
-  password: string;
+  email: string
+  password: string
 }
 
 export interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  user: UserDto;
+  accessToken: string
+  refreshToken: string
+  user: UserDto
 }
 
 export interface UserDto {
-  id: string;
-  email: string;
-  isPremium: boolean;
-  isAdmin: boolean;
-  provider: 'GOOGLE' | 'GITHUB' | null;
+  id: string
+  email: string
+  isPremium: boolean
+  isAdmin: boolean
+  provider: 'GOOGLE' | 'GITHUB' | null
 }
 ```
 

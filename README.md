@@ -14,59 +14,62 @@ Built as a portfolio project demonstrating real-time architecture, modern React 
 
 ## Feature Overview
 
-| Feature | Free | Premium |
-|---|---|---|
-| Real-time price feed (WebSocket) | ✅ | ✅ |
-| Unlimited watchlist | ✅ | ✅ |
-| Historical charts (1D / 1W / 1M) | ✅ | ✅ |
-| Price threshold alerts (email + in-app) | ✅ | ✅ |
-| AI portfolio chatbot | — | ✅ |
+| Feature                                 | Free | Premium |
+| --------------------------------------- | ---- | ------- |
+| Real-time price feed (WebSocket)        | ✅   | ✅      |
+| Unlimited watchlist                     | ✅   | ✅      |
+| Historical charts (1D / 1W / 1M)        | ✅   | ✅      |
+| Price threshold alerts (email + in-app) | ✅   | ✅      |
+| AI portfolio chatbot                    | —    | ✅      |
 
 ---
 
 ## Tech Stack
 
 ### Frontend
-| | |
-|---|---|
-| Framework | React 18 + TypeScript (strict) |
-| Data fetching | TanStack Query v5 (React Query) |
-| UI state | Zustand |
-| Visualisations | D3.js |
-| Styling | Tailwind CSS |
-| Forms | React Hook Form + Zod |
-| Real-time | Native WebSocket client |
-| Performance | TanStack Virtual (virtualised lists) |
-| Testing | Vitest + React Testing Library + Playwright |
-| Bundler | Vite |
+
+|                |                                             |
+| -------------- | ------------------------------------------- |
+| Framework      | React 18 + TypeScript (strict)              |
+| Data fetching  | TanStack Query v5 (React Query)             |
+| UI state       | Zustand                                     |
+| Visualisations | D3.js                                       |
+| Styling        | Tailwind CSS                                |
+| Forms          | React Hook Form + Zod                       |
+| Real-time      | Native WebSocket client                     |
+| Performance    | TanStack Virtual (virtualised lists)        |
+| Testing        | Vitest + React Testing Library + Playwright |
+| Bundler        | Vite                                        |
 
 ### Backend
-| | |
-|---|---|
-| Runtime | Node.js + TypeScript (strict) |
-| Framework | NestJS |
-| Database | PostgreSQL (via Prisma ORM) |
-| Cache + queue | Redis (ElastiCache) + BullMQ |
-| Auth | JWT (access + refresh rotation) + Passport.js |
-| Social auth | OAuth 2.0 — Google, GitHub |
-| Real-time | NestJS WebSocket Gateway |
-| Email | Nodemailer + SendGrid |
-| LLM | Provider-agnostic adapter (OpenAI / Anthropic) |
-| Testing | Jest + Supertest |
+
+|               |                                                |
+| ------------- | ---------------------------------------------- |
+| Runtime       | Node.js + TypeScript (strict)                  |
+| Framework     | NestJS                                         |
+| Database      | PostgreSQL (via Prisma ORM)                    |
+| Cache + queue | Redis (ElastiCache) + BullMQ                   |
+| Auth          | JWT (access + refresh rotation) + Passport.js  |
+| Social auth   | OAuth 2.0 — Google, GitHub                     |
+| Real-time     | NestJS WebSocket Gateway                       |
+| Email         | Nodemailer + SendGrid                          |
+| LLM           | Provider-agnostic adapter (OpenAI / Anthropic) |
+| Testing       | Jest + Supertest                               |
 
 ### Infrastructure
-| | |
-|---|---|
-| Cloud | AWS |
-| Frontend hosting | S3 + CloudFront |
-| Backend compute | ECS Fargate |
-| Database | RDS PostgreSQL |
-| Cache | ElastiCache Redis |
-| Load balancer | Application Load Balancer |
-| IaC | Terraform |
-| CI/CD | GitHub Actions |
-| SAST | CodeQL + SonarCloud |
-| Secret management | AWS Secrets Manager |
+
+|                   |                           |
+| ----------------- | ------------------------- |
+| Cloud             | AWS                       |
+| Frontend hosting  | S3 + CloudFront           |
+| Backend compute   | ECS Fargate               |
+| Database          | RDS PostgreSQL            |
+| Cache             | ElastiCache Redis         |
+| Load balancer     | Application Load Balancer |
+| IaC               | Terraform                 |
+| CI/CD             | GitHub Actions            |
+| SAST              | CodeQL + SonarCloud       |
+| Secret management | AWS Secrets Manager       |
 
 ---
 
@@ -298,14 +301,14 @@ Production         (manual approval gate)
 
 ## Delivery Phases
 
-| Phase | Scope | Status |
-|---|---|---|
-| 1 | Monorepo + auth (email/password + OAuth) + dashboard shell | Planning |
-| 2 | Live data feed + watchlist (Finnhub WebSocket, virtualised list) | Pending |
-| 3 | Historical charts (D3 candlestick, 1D/1W/1M) | Pending |
-| 4 | Price alerts + email + in-app notifications | Pending |
-| 5 | Premium AI chatbot (LLM adapter, streaming, portfolio context) | Pending |
-| 6 | CI/CD + Terraform + AWS cloud deploy + WCAG audit | Pending |
+| Phase | Scope                                                            | Status   |
+| ----- | ---------------------------------------------------------------- | -------- |
+| 1     | Monorepo + auth (email/password + OAuth) + dashboard shell       | Planning |
+| 2     | Live data feed + watchlist (Finnhub WebSocket, virtualised list) | Pending  |
+| 3     | Historical charts (D3 candlestick, 1D/1W/1M)                     | Pending  |
+| 4     | Price alerts + email + in-app notifications                      | Pending  |
+| 5     | Premium AI chatbot (LLM adapter, streaming, portfolio context)   | Pending  |
+| 6     | CI/CD + Terraform + AWS cloud deploy + WCAG audit                | Pending  |
 
 Detailed plan for Phase 1: [docs/phase1.md](docs/phase1.md)
 
