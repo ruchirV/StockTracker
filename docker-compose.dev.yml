@@ -28,6 +28,12 @@ services:
       timeout: 3s
       retries: 5
 
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - '1025:1025' # SMTP
+      - '8025:8025' # Web UI — view caught emails at http://localhost:8025
+
 volumes:
   postgres_data:
   redis_data:

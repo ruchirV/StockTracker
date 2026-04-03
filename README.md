@@ -226,7 +226,7 @@ stocktracker/
 ### Prerequisites
 
 - Node.js 20+
-- Docker (for PostgreSQL)
+- Docker (for local services — PostgreSQL, Redis, Mailpit)
 - A Finnhub API key (free at [finnhub.io](https://finnhub.io))
 - Google + GitHub OAuth app credentials
 
@@ -236,7 +236,7 @@ stocktracker/
 # 1. Install dependencies
 npm install
 
-# 2. Start PostgreSQL
+# 2. Start all local services (PostgreSQL, Redis, Mailpit)
 docker compose -f docker-compose.dev.yml up -d
 
 # 3. Copy environment template and fill in values
@@ -253,6 +253,36 @@ Frontend: `http://localhost:5173`
 Backend API: `http://localhost:3001`  
 Prisma Studio: `npx prisma studio` → `http://localhost:5555`
 
+### Local Docker Services
+
+| Service    | Purpose                        | Port(s)              |
+| ---------- | ------------------------------ | -------------------- |
+| PostgreSQL | Primary database               | `5432`               |
+| Redis      | Pub/Sub, price cache, BullMQ   | `6379`               |
+| Mailpit    | Catches outbound email locally | SMTP `1025`, UI `8025` |
+
+#### Viewing alert emails locally
+
+When a price alert fires during local development, the email is intercepted by **Mailpit** — no real email is sent. Open the Mailpit web UI to inspect it:
+
+```
+http://localhost:8025
+```
+
+You will see the full email including subject, body, and recipient, rendered exactly as it would appear in a real inbox. The inbox clears on container restart.
+
+To start only Mailpit (if the other services are already running):
+
+```bash
+docker compose -f docker-compose.dev.yml up -d mailpit
+```
+
+To stop all local services:
+
+```bash
+docker compose -f docker-compose.dev.yml down
+```
+
 ### Environment Variables
 
 See [`apps/backend/.env.example`](apps/backend/.env.example) for all required variables:
@@ -266,10 +296,23 @@ GOOGLE_CLIENT_SECRET=
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 FINNHUB_API_KEY=
-SENDGRID_API_KEY=
+
+# BullMQ (defaults to REDIS_URL if not set)
+BULLMQ_REDIS_URL=redis://localhost:6379
+
+# Email — Mailpit catches all mail locally (no real emails sent in dev)
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_USER=
+SMTP_PASS=
+EMAIL_FROM=noreply@stocktracker.dev
+
+# Phase 5 — AI chatbot (not required until Phase 5)
 LLM_PROVIDER=openai          # or: anthropic
 LLM_API_KEY=
 ```
+
+> In production, `SMTP_HOST`/`SMTP_PORT` point to SendGrid (or another SMTP relay) and `BULLMQ_REDIS_URL` points to ElastiCache.
 
 ---
 
@@ -301,16 +344,16 @@ Production         (manual approval gate)
 
 ## Delivery Phases
 
-| Phase | Scope                                                            | Status   |
-| ----- | ---------------------------------------------------------------- | -------- |
-| 1     | Monorepo + auth (email/password + OAuth) + dashboard shell       | Planning |
-| 2     | Live data feed + watchlist (Finnhub WebSocket, virtualised list) | Pending  |
-| 3     | Historical charts (D3 candlestick, 1D/1W/1M)                     | Pending  |
-| 4     | Price alerts + email + in-app notifications                      | Pending  |
-| 5     | Premium AI chatbot (LLM adapter, streaming, portfolio context)   | Pending  |
-| 6     | CI/CD + Terraform + AWS cloud deploy + WCAG audit                | Pending  |
+| Phase | Scope                                                            | Status      |
+| ----- | ---------------------------------------------------------------- | ----------- |
+| 1     | Monorepo + auth (email/password + OAuth) + dashboard shell       | ✅ Complete |
+| 2     | Live data feed + watchlist (Finnhub WebSocket, virtualised list) | ✅ Complete |
+| 3     | Historical charts (D3 candlestick, 1D/1W/1M)                     | ✅ Complete |
+| 4     | Price alerts + email + in-app notifications + sidebar nav        | ✅ Complete |
+| 5     | Premium AI chatbot (LLM adapter, streaming, portfolio context)   | Planning    |
+| 6     | CI/CD + Terraform + AWS cloud deploy + WCAG audit                | Pending     |
 
-Detailed plan for Phase 1: [docs/phase1.md](docs/phase1.md)
+Detailed plans: [Phase 1](docs/phase1.md) · [Phase 2](docs/phase2.md) · [Phase 3](docs/phase3.md) · [Phase 4](docs/phase4.md) · [Phase 5](docs/phase5.md)
 
 ---
 

@@ -47,6 +47,7 @@ export type WsServerMessage =
   | { type: 'price'; symbol: string; price: number; change: number; changePercent: number; timestamp: number }
   | { type: 'status'; finnhubConnected: boolean }
   | { type: 'ping' }
+  | { type: 'notification'; id: string; message: string; createdAt: string }
 
 /** Client → Server */
 export type WsClientMessage =
@@ -95,7 +96,8 @@ export interface CreateAlertDto {
 export interface Notification {
   id: string
   message: string
-  read: boolean
+  isRead: boolean
+  alertId: string | null
   createdAt: string
 }
 

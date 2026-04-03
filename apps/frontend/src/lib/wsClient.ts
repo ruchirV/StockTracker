@@ -1,6 +1,7 @@
 import type { WsServerMessage, WsClientMessage } from '@stocktracker/types'
 import { useAuthStore } from '@/stores/authStore'
 import { usePriceStore } from '@/stores/priceStore'
+import { useNotificationStore } from '@/stores/notificationStore'
 
 class WsClient {
   private ws: WebSocket | null = null
@@ -101,6 +102,15 @@ class WsClient {
         if (this.connectedSymbols.size > 0) {
           this.send({ type: 'subscribe', symbols: Array.from(this.connectedSymbols) })
         }
+        break
+      case 'notification':
+        useNotificationStore.getState().addNotification({
+          id: msg.id,
+          message: msg.message,
+          isRead: false,
+          alertId: null,
+          createdAt: msg.createdAt,
+        })
         break
     }
   }

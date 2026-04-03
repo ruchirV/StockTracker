@@ -1,8 +1,11 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Inject, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { InjectQueue } from '@nestjs/bullmq'
+import { Queue } from 'bullmq'
 import WebSocket from 'ws'
 import type Redis from 'ioredis'
 import { REDIS_PUB } from '../redis/redis.constants'
+import { ALERT_EVALUATION_QUEUE } from '../alerts/alerts.constants'
 
 interface TradeTick {
   s: string // symbol
@@ -25,10 +28,10 @@ export class FinnhubClient implements OnModuleInit, OnModuleDestroy {
   private destroyed = false
   private pendingSubscriptions = new Set<string>()
 
-  // statusPublisher is the redis pub client, used to broadcast connection status
   constructor(
     config: ConfigService,
     @Inject(REDIS_PUB) private readonly redisPub: Redis,
+    @InjectQueue(ALERT_EVALUATION_QUEUE) private readonly alertQueue: Queue,
   ) {
     this.apiKey = config.get<string>('FINNHUB_API_KEY') ?? ''
   }
@@ -126,6 +129,9 @@ export class FinnhubClient implements OnModuleInit, OnModuleDestroy {
       `prices:${symbol}`,
       JSON.stringify({ symbol, price, change, changePercent, timestamp }),
     )
+
+    // Enqueue alert evaluation (fire-and-forget)
+    void this.alertQueue.add('evaluate', { symbol, price })
   }
 
   private async publishStatus(connected: boolean) {

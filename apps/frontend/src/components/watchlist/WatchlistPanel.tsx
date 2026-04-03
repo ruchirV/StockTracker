@@ -51,6 +51,16 @@ export function WatchlistPanel() {
 
       <AddStockBar />
 
+      {/* Column headers */}
+      {items.length > 0 && (
+        <div className="flex items-center gap-4 border-b border-gray-100 bg-gray-50 px-4 py-1.5">
+          <span className="w-20 flex-shrink-0 text-xs font-medium uppercase tracking-wide text-gray-400">Symbol</span>
+          <span className="flex-1 text-xs font-medium uppercase tracking-wide text-gray-400">Company</span>
+          <span className="w-28 flex-shrink-0 text-right text-xs font-medium uppercase tracking-wide text-gray-400">Price / Chg%</span>
+          <span className="w-8 flex-shrink-0" aria-hidden="true" />
+        </div>
+      )}
+
       {items.length === 0 ? (
         <EmptyState />
       ) : expandedSymbol !== null ? (

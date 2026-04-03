@@ -18,8 +18,37 @@ model User {
 
   refreshTokens  RefreshToken[]
   watchlistItems WatchlistItem[]
+  priceAlerts    PriceAlert[]
+  notifications  Notification[]
 
   @@unique([provider, providerId])
+}
+
+model PriceAlert {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol    String
+  threshold Float
+  direction AlertDirection
+  isActive  Boolean        @default(true)
+  firedAt   DateTime?
+  createdAt DateTime       @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  alertId   String?
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+enum AlertDirection {
+  above
+  below
 }
 
 model WatchlistItem {

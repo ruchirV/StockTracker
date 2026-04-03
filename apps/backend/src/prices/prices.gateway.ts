@@ -191,6 +191,16 @@ export class PricesGateway
     })
   }
 
+  /** Send a payload to all active WebSocket connections belonging to a specific user. */
+  sendToUser(userId: string, data: unknown) {
+    const msg = JSON.stringify(data)
+    this.connMap.forEach((ws) => {
+      if (ws.userId === userId && ws.readyState === WebSocket.OPEN) {
+        ws.send(msg)
+      }
+    })
+  }
+
   private send(ws: TaggedSocket, data: unknown) {
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(data))

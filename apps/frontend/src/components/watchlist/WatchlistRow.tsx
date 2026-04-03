@@ -3,6 +3,30 @@ import { usePriceStore } from '@/stores/priceStore'
 import { useRemoveFromWatchlist } from '@/hooks/useWatchlist'
 import type { WatchlistItemDto } from '@stocktracker/types'
 
+// Static lookup for top 20 symbols — company name shown in the watchlist row
+const COMPANY_NAMES: Record<string, string> = {
+  AAPL: 'Apple Inc.',
+  MSFT: 'Microsoft Corp.',
+  GOOGL: 'Alphabet Inc.',
+  GOOG: 'Alphabet Inc.',
+  AMZN: 'Amazon.com Inc.',
+  NVDA: 'NVIDIA Corp.',
+  META: 'Meta Platforms',
+  TSLA: 'Tesla Inc.',
+  BRK: 'Berkshire Hathaway',
+  JPM: 'JPMorgan Chase',
+  V: 'Visa Inc.',
+  UNH: 'UnitedHealth Group',
+  JNJ: 'Johnson & Johnson',
+  XOM: 'Exxon Mobil',
+  AVGO: 'Broadcom Inc.',
+  PG: 'Procter & Gamble',
+  MA: 'Mastercard Inc.',
+  HD: 'Home Depot Inc.',
+  COST: 'Costco Wholesale',
+  NFLX: 'Netflix Inc.',
+}
+
 interface Props {
   item: WatchlistItemDto
   isExpanded: boolean
@@ -43,6 +67,8 @@ export function WatchlistRow({ item, isExpanded, onToggle }: Props) {
         : 'transition-colors duration-800'
   const expandedBorder = isExpanded ? 'border-l-2 border-blue-500' : 'border-l-2 border-transparent'
 
+  const companyName = COMPANY_NAMES[item.symbol] ?? '—'
+
   return (
     <div
       className={`flex items-center gap-4 rounded-none px-4 py-3 cursor-pointer hover:bg-gray-50 ${flashClass} ${expandedBorder}`}
@@ -53,10 +79,11 @@ export function WatchlistRow({ item, isExpanded, onToggle }: Props) {
       aria-label={`${item.symbol} — click to ${isExpanded ? 'close' : 'open'} chart`}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle() } }}
     >
-      <div className="flex items-center gap-1.5 w-16 flex-shrink-0">
+      {/* Symbol + chevron */}
+      <div className="flex w-20 flex-shrink-0 items-center gap-1.5">
         <span className="font-semibold text-gray-900">{item.symbol}</span>
         <svg
-          className={`h-3 w-3 text-gray-400 transition-transform duration-200 flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
+          className={`h-3 w-3 flex-shrink-0 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -67,15 +94,16 @@ export function WatchlistRow({ item, isExpanded, onToggle }: Props) {
         </svg>
       </div>
 
-      <div className="flex-1 text-right tabular-nums" onClick={(e) => e.stopPropagation()}>
+      {/* Company name */}
+      <span className="flex-1 truncate text-sm text-gray-500">{companyName}</span>
+
+      {/* Price + change — right-aligned tabular */}
+      <div className="flex w-28 flex-shrink-0 flex-col items-end tabular-nums" onClick={(e) => e.stopPropagation()}>
         {price ? (
           <>
-            <span className="text-base font-medium text-gray-900">
-              ${price.price.toFixed(2)}
-            </span>
-            <span className={`ml-2 text-sm ${changeColor}`}>
-              {price.changePercent >= 0 ? '+' : ''}
-              {price.changePercent.toFixed(2)}%
+            <span className="text-sm font-medium text-gray-900">${price.price.toFixed(2)}</span>
+            <span className={`text-xs ${changeColor}`}>
+              {price.changePercent >= 0 ? '+' : ''}{price.changePercent.toFixed(2)}%
             </span>
           </>
         ) : (
@@ -83,11 +111,12 @@ export function WatchlistRow({ item, isExpanded, onToggle }: Props) {
         )}
       </div>
 
+      {/* Remove */}
       <button
         onClick={(e) => { e.stopPropagation(); remove(item.id) }}
         disabled={isPending}
         aria-label={`Remove ${item.symbol} from watchlist`}
-        className="ml-2 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-400 disabled:opacity-50"
+        className="w-8 flex-shrink-0 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-400 disabled:opacity-50"
       >
         <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
           <path
