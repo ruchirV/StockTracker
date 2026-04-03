@@ -1,5 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing'
 import { ConflictException, NotFoundException, ForbiddenException } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import axios from 'axios'
 import { WatchlistService } from './watchlist.service'
 import { PrismaService } from '../prisma/prisma.service'
 import { REDIS_PUB } from '../redis/redis.constants'
@@ -16,6 +18,11 @@ const mockPrisma = {
 const mockRedisPub = {
   hgetall: jest.fn(),
   hget: jest.fn(),
+  hset: jest.fn(),
+}
+
+const mockConfig = {
+  get: jest.fn().mockReturnValue('test-api-key'),
 }
 
 describe('WatchlistService', () => {
@@ -26,12 +33,16 @@ describe('WatchlistService', () => {
       providers: [
         WatchlistService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: ConfigService, useValue: mockConfig },
         { provide: REDIS_PUB, useValue: mockRedisPub },
       ],
     }).compile()
 
     service = module.get<WatchlistService>(WatchlistService)
     jest.clearAllMocks()
+    // Default: no existing Redis price, hset succeeds
+    mockRedisPub.hget.mockResolvedValue(null)
+    mockRedisPub.hset.mockResolvedValue(1)
   })
 
   describe('list', () => {
@@ -64,12 +75,46 @@ describe('WatchlistService', () => {
     it('creates and returns a watchlist item', async () => {
       const item = { id: '1', symbol: 'AAPL', userId: 'u1', addedAt: new Date('2024-01-01') }
       mockPrisma.watchlistItem.create.mockResolvedValue(item)
+      jest.spyOn(axios, 'get').mockResolvedValue({ data: { c: 188, d: 1, dp: 0.5, t: 1775136600 } })
 
       const result = await service.add('u1', 'AAPL')
       expect(result.symbol).toBe('AAPL')
       expect(mockPrisma.watchlistItem.create).toHaveBeenCalledWith({
         data: { userId: 'u1', symbol: 'AAPL' },
       })
+    })
+
+    it('seeds Redis price after creating the item', async () => {
+      const item = { id: '1', symbol: 'AMZN', userId: 'u1', addedAt: new Date('2024-01-01') }
+      mockPrisma.watchlistItem.create.mockResolvedValue(item)
+      jest
+        .spyOn(axios, 'get')
+        .mockResolvedValue({ data: { c: 209, d: -0.8, dp: -0.38, t: 1775136600 } })
+
+      await service.add('u1', 'AMZN')
+
+      // Give the fire-and-forget promise a tick to resolve
+      await new Promise((resolve) => {
+        process.nextTick(resolve)
+      })
+      expect(mockRedisPub.hset).toHaveBeenCalledWith(
+        'prices:AMZN',
+        expect.objectContaining({ price: '209' }),
+      )
+    })
+
+    it('skips Redis seed when price is already cached', async () => {
+      const item = { id: '1', symbol: 'AAPL', userId: 'u1', addedAt: new Date('2024-01-01') }
+      mockPrisma.watchlistItem.create.mockResolvedValue(item)
+      mockRedisPub.hget.mockResolvedValue('150.00') // already cached
+      const axiosSpy = jest.spyOn(axios, 'get')
+
+      await service.add('u1', 'AAPL')
+      await new Promise((resolve) => {
+        process.nextTick(resolve)
+      })
+
+      expect(axiosSpy).not.toHaveBeenCalled()
     })
 
     it('throws ConflictException on duplicate symbol', async () => {

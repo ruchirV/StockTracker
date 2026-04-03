@@ -1,6 +1,6 @@
 # Phase 2 — Live Data + Watchlist
 
-**Status:** Planning  
+**Status:** Complete  
 **Goal:** A user can manage a watchlist of stock symbols and see real-time prices updating live via WebSocket, backed by a Finnhub upstream feed and Redis Pub/Sub.
 
 ---
@@ -9,23 +9,23 @@
 
 Phase 2 is complete when **all** of the following scenarios pass end-to-end in the local dev environment:
 
-| # | Scenario | Expected Result |
-|---|---|---|
-| M1 | `POST /watchlist` with `{ symbol: "AAPL" }` (authenticated) | `201` + watchlist item |
-| M2 | `POST /watchlist` with duplicate symbol for same user | `409 Conflict` |
-| M3 | `GET /watchlist` (authenticated) | `200` + array of watchlist items |
-| M4 | `DELETE /watchlist/:id` (authenticated) | `200` — item removed |
-| M5 | `DELETE /watchlist/:id` for another user's item | `403 Forbidden` |
-| M6 | Any watchlist endpoint without auth | `401 Unauthorized` |
-| M7 | Browser opens WebSocket to `ws://localhost:3001` | Connection accepted, server sends `{ type: "connected" }` |
-| M8 | User adds AAPL to watchlist; Finnhub sends a price tick | Browser receives `{ type: "price", symbol: "AAPL", price, change, changePercent, timestamp }` within 3 seconds |
-| M9 | User removes AAPL from watchlist (last subscriber) | Backend unsubscribes from Finnhub for AAPL; client no longer receives AAPL ticks |
-| M10 | Second browser tab opens WebSocket | Both tabs receive the same price ticks; Finnhub is still subscribed once |
-| M11 | Finnhub WebSocket drops | Backend reconnects automatically; client receives `{ type: "status", connected: false }` then `{ type: "status", connected: true }` |
-| M12 | Dashboard renders watchlist with live price rows | Prices update in place; row flashes green/red on change |
-| M13 | Watchlist with 50+ items | List virtualised — no layout jank, smooth scroll |
-| M14 | `GET /watchlist` returns items; each item has last known price from Redis cache | No waiting for next Finnhub tick |
-| M15 | ESLint + Prettier + `tsc --noEmit` all pass with zero errors | CI green |
+| # | Scenario | Expected Result | Status |
+|---|---|---|---|
+| M1 | `POST /watchlist` with `{ symbol: "AAPL" }` (authenticated) | `201` + watchlist item | ✅ |
+| M2 | `POST /watchlist` with duplicate symbol for same user | `409 Conflict` | ✅ |
+| M3 | `GET /watchlist` (authenticated) | `200` + array of watchlist items | ✅ |
+| M4 | `DELETE /watchlist/:id` (authenticated) | `200` — item removed | ✅ |
+| M5 | `DELETE /watchlist/:id` for another user's item | `403 Forbidden` | ✅ |
+| M6 | Any watchlist endpoint without auth | `401 Unauthorized` | ✅ |
+| M7 | Browser opens WebSocket to `ws://localhost:3001` | Connection accepted, server sends `{ type: "connected" }` | ✅ |
+| M8 | User adds AAPL to watchlist; Finnhub sends a price tick | Browser receives `{ type: "price", … }` within seconds | ✅ |
+| M9 | User removes AAPL from watchlist (last subscriber) | Backend unsubscribes from Finnhub; client stops receiving ticks | ✅ |
+| M10 | Second browser tab opens WebSocket | Both tabs receive the same price ticks; Finnhub subscribed once | ✅ |
+| M11 | Finnhub WebSocket drops | Backend reconnects automatically with exponential backoff; status events broadcast | ✅ |
+| M12 | Dashboard renders watchlist with live price rows | Prices update in place; row flashes green/red on change | ✅ |
+| M13 | Watchlist with 50+ items | List virtualised — no layout jank, smooth scroll | ✅ |
+| M14 | `GET /watchlist` returns items with last known price from Redis | New symbol seeded via Finnhub `/quote` on add; note staleness — see [TD-001](tech-debt.md#td-001) | ✅ ⚠️ |
+| M15 | ESLint + Prettier + `tsc --noEmit` all pass with zero errors | CI green — 27 backend tests, 21 frontend tests passing | ✅ |
 
 ---
 

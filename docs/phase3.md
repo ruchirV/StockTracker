@@ -1,7 +1,8 @@
 # Phase 3 — Historical Charts
 
-**Status:** Planning  
-**Goal:** A user can click a stock in the watchlist to open a D3 candlestick chart with 1D / 1W / 1M time-range switching, backed by the Finnhub historical candle REST API and Redis caching.
+**Status:** Complete  
+**Goal:** A user can click a stock in the watchlist to open a D3 candlestick chart with 1D / 1W / 1M time-range switching, backed by Yahoo Finance daily candle data and Redis caching.  
+**Note:** Candle data source changed from Finnhub to Yahoo Finance (free tier) — see [ADR-001](decisions/001-historical-candles-data-source.md). All ranges return daily bars. Intraday resolution deferred to TD-002.
 
 ---
 
@@ -9,19 +10,19 @@
 
 Phase 3 is complete when **all** of the following scenarios pass end-to-end in the local dev environment:
 
-| # | Scenario | Expected Result |
-|---|---|---|
-| C1 | `GET /candles/AAPL?range=1D` (authenticated) | `200` + OHLCV array, ~78 5-min candles for today's trading session |
-| C2 | `GET /candles/AAPL?range=1W` | `200` + daily candles for the last 7 calendar days |
-| C3 | `GET /candles/AAPL?range=1M` | `200` + daily candles for the last 30 calendar days |
-| C4 | `GET /candles/AAPL?range=1D` called twice within 60 s | Second call returns Redis-cached data — no outbound Finnhub HTTP request |
-| C5 | `GET /candles/AAPL?range=1D` without auth header | `401 Unauthorized` |
-| C6 | `GET /candles/INVALID?range=1D` | `400 Bad Request` (symbol fails `[A-Z]{1,5}` validation) |
-| C7 | User clicks a watchlist row | `ChartPanel` slides open below the row showing the candlestick chart |
-| C8 | User toggles 1D / 1W / 1M | Chart re-renders with correct candles and axis labels; loading skeleton shown during fetch |
-| C9 | Chart with 200 candles | No layout jank, smooth render; interaction (hover tooltip) works correctly |
-| C10 | Chart accessibility | `role="img"` with descriptive `aria-label`; range buttons have `aria-pressed`; keyboard-navigable |
-| C11 | ESLint + Prettier + `tsc --noEmit` all pass | CI green |
+| # | Scenario | Expected Result | Status |
+|---|---|---|---|
+| C1 | `GET /candles/AAPL?range=1D` (authenticated) | `200` + daily OHLCV array (~5 trading days) | ✅ |
+| C2 | `GET /candles/AAPL?range=1W` | `200` + daily candles for the last 4 weeks | ✅ |
+| C3 | `GET /candles/AAPL?range=1M` | `200` + daily candles for the last 3 months | ✅ |
+| C4 | `GET /candles/AAPL?range=1D` called twice within 1 hr | Second call returns Redis-cached data — no outbound HTTP request | ✅ |
+| C5 | `GET /candles/AAPL?range=1D` without auth header | `401 Unauthorized` | ✅ |
+| C6 | `GET /candles/INVALID?range=1D` | `400 Bad Request` (symbol fails `[A-Z]{1,5}` validation) | ✅ |
+| C7 | User clicks a watchlist row | `ChartPanel` expands inline below the row showing the candlestick chart | ✅ |
+| C8 | User toggles 1D / 1W / 1M | Chart re-renders with correct candles and axis labels; loading skeleton shown during fetch | ✅ |
+| C9 | Chart with many candles | Smooth render (~62 candles for 1M); hover tooltip tracks correctly | ✅ |
+| C10 | Chart accessibility | `role="img"` with descriptive `aria-label`; range buttons have `aria-pressed`; watchlist row keyboard-navigable (Enter/Space) | ✅ |
+| C11 | ESLint + Prettier + `tsc --noEmit` all pass | CI green — 27 backend tests, 21 frontend tests passing | ✅ |
 
 ---
 

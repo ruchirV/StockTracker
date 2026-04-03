@@ -1,6 +1,6 @@
 # Phase 1 — Foundation: Auth + Dashboard Shell
 
-**Status:** Planning  
+**Status:** Complete  
 **Goal:** A working, deployed-locally full-stack application where a user can register, log in (email/password + OAuth), and land on a protected dashboard shell.
 
 ---
@@ -9,23 +9,23 @@
 
 Phase 1 is complete when **all** of the following scenarios pass end-to-end in the local dev environment:
 
-| #   | Scenario                                                     | Expected Result                                                            |
-| --- | ------------------------------------------------------------ | -------------------------------------------------------------------------- |
-| M1  | `POST /auth/register` with email + password                  | `201` + `{ accessToken, refreshToken, user }`                              |
-| M2  | `POST /auth/login` with same credentials                     | `200` + `{ accessToken, refreshToken, user }`                              |
-| M3  | `GET /auth/me` with valid access token                       | `200` + user object                                                        |
-| M4  | `GET /auth/me` with expired access token                     | `401 Unauthorized`                                                         |
-| M5  | `POST /auth/refresh` with valid refresh token                | `200` + new access + refresh token pair                                    |
-| M6  | `POST /auth/logout` with refresh token                       | `200`; subsequent `POST /auth/refresh` returns `401`                       |
-| M7  | `POST /auth/login` with wrong password                       | `401` with generic message (no user enumeration)                           |
-| M8  | Google OAuth flow in browser                                 | Redirects → consent → callback → sets tokens → lands on dashboard          |
-| M9  | GitHub OAuth flow in browser                                 | Same as M8                                                                 |
-| M10 | Navigate to `/dashboard` unauthenticated                     | Redirected to `/login`                                                     |
-| M11 | Navigate to `/dashboard` with valid session                  | Dashboard shell renders with user's email visible                          |
-| M12 | Click logout button                                          | Tokens cleared; redirect to `/login`; back button does not restore session |
-| M13 | `POST /auth/register` with duplicate email                   | `409 Conflict`                                                             |
-| M14 | `POST /auth/register` with invalid email/short password      | `400` with validation error details                                        |
-| M15 | ESLint + Prettier + `tsc --noEmit` all pass with zero errors | CI green                                                                   |
+| #   | Scenario                                                     | Expected Result                                                            | Status |
+| --- | ------------------------------------------------------------ | -------------------------------------------------------------------------- | ------ |
+| M1  | `POST /auth/register` with email + password                  | `201` + `{ accessToken, refreshToken, user }`                              | ✅ |
+| M2  | `POST /auth/login` with same credentials                     | `200` + `{ accessToken, refreshToken, user }`                              | ✅ |
+| M3  | `GET /auth/me` with valid access token                       | `200` + user object                                                        | ✅ |
+| M4  | `GET /auth/me` with expired access token                     | `401 Unauthorized`                                                         | ✅ |
+| M5  | `POST /auth/refresh` with valid refresh token                | `200` + new access + refresh token pair                                    | ✅ |
+| M6  | `POST /auth/logout` with refresh token                       | `200`; subsequent `POST /auth/refresh` returns `401`                       | ✅ |
+| M7  | `POST /auth/login` with wrong password                       | `401` with generic message (no user enumeration)                           | ✅ |
+| M8  | Google OAuth flow in browser                                 | Redirects → consent → callback → sets tokens → lands on dashboard          | ✅ |
+| M9  | GitHub OAuth flow in browser                                 | Same as M8                                                                 | ✅ |
+| M10 | Navigate to `/dashboard` unauthenticated                     | Redirected to `/login`                                                     | ✅ |
+| M11 | Navigate to `/dashboard` with valid session                  | Dashboard shell renders with user's email visible                          | ✅ |
+| M12 | Click logout button                                          | Tokens cleared; redirect to `/login`; back button does not restore session | ✅ |
+| M13 | `POST /auth/register` with duplicate email                   | `409 Conflict`                                                             | ✅ |
+| M14 | `POST /auth/register` with invalid email/short password      | `400` with validation error details                                        | ✅ |
+| M15 | ESLint + Prettier + `tsc --noEmit` all pass with zero errors | CI green — 18 backend tests, 6 frontend tests passing                      | ✅ |
 
 ---
 
