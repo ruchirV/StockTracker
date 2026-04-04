@@ -116,6 +116,20 @@ export interface CandleDto {
 
 export type ChartRange = '1D' | '1W' | '1M'
 
+// ─── Premium upgrade DTOs ─────────────────────────────────────────────────────
+
+export type PremiumRequestStatus = 'pending' | 'approved' | 'rejected'
+
+export interface PremiumRequestDto {
+  id: string
+  userId: string
+  userEmail: string
+  status: PremiumRequestStatus
+  adminNote: string | null
+  createdAt: string
+  updatedAt: string
+}
+
 // ─── Chat DTOs ────────────────────────────────────────────────────────────────
 
 export interface ChatMessage {

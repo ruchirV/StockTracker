@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { useLogout } from '@/hooks/useAuth'
 import { useNotificationStore } from '@/stores/notificationStore'
+import { usePremiumRequestStatus, useRequestPremium } from '@/hooks/usePremium'
 
 function getAvatarColor(email: string): string {
   const colors = [
@@ -21,9 +23,15 @@ export function Sidebar() {
   const unreadCount = useNotificationStore((s) => s.unreadCount)
   const { mutate: logout } = useLogout()
   const navigate = useNavigate()
+  const [showConfirm, setShowConfirm] = useState(false)
+
+  const { data: pendingRequest } = usePremiumRequestStatus()
+  const { mutate: requestPremium, isPending: isRequesting } = useRequestPremium()
 
   const avatarInitial = user?.email ? user.email[0]!.toUpperCase() : '?'
   const avatarColor = user?.email ? getAvatarColor(user.email) : 'bg-slate-600'
+
+  const hasPendingRequest = !!pendingRequest
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
@@ -70,22 +78,31 @@ export function Sidebar() {
           )}
         </NavLink>
 
-        {/* AI Chat — disabled until Phase 5 */}
+        {/* AI Chat — locked for non-premium users */}
+        {user?.isAdmin ? (
+          <NavLink to="/admin/premium-requests" className={navLinkClass}>
+            <ShieldIcon />
+            Admin
+          </NavLink>
+        ) : null}
+
         <div
           aria-disabled="true"
           className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 cursor-not-allowed select-none"
-          title="Premium feature — available in a future update"
+          title={user?.isPremium ? 'AI Chat' : 'Premium feature — coming in Phase 5'}
         >
           <ChatIcon />
           AI Chat
-          <span className="ml-auto rounded bg-amber-500/20 px-1.5 py-0.5 text-xs font-semibold text-amber-400">
-            Premium
-          </span>
+          {!user?.isPremium && (
+            <span className="ml-auto rounded bg-amber-500/20 px-1.5 py-0.5 text-xs font-semibold text-amber-400">
+              Premium
+            </span>
+          )}
         </div>
       </nav>
 
       {/* User section */}
-      <div className="border-t border-slate-800 pt-3">
+      <div className="border-t border-slate-800 pt-3 space-y-1">
         <div className="flex items-center gap-3 px-3 py-2">
           <div
             className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white ${avatarColor}`}
@@ -95,9 +112,59 @@ export function Sidebar() {
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-medium text-white">{user?.email}</p>
-            <p className="text-xs text-slate-500">{user?.isPremium ? 'Premium' : 'Free plan'}</p>
+            <p className={`text-xs ${user?.isPremium ? 'text-amber-400 font-semibold' : 'text-slate-500'}`}>
+              {user?.isAdmin ? 'Admin' : user?.isPremium ? 'Premium' : 'Free plan'}
+            </p>
           </div>
         </div>
+
+        {/* Premium request button — only for free users without a pending request */}
+        {!user?.isPremium && !user?.isAdmin && (
+          hasPendingRequest ? (
+            <div className="mx-2 flex items-center gap-2 rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-500">
+              <SpinnerIcon />
+              Request pending…
+            </div>
+          ) : (
+            <>
+              {showConfirm ? (
+                <div className="mx-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 space-y-2">
+                  <p className="text-xs text-amber-300 leading-relaxed">
+                    Send a request to the admin to unlock premium features including the AI portfolio chatbot.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirm(false)}
+                      className="flex-1 rounded-md border border-slate-600 px-2 py-1.5 text-xs text-slate-400 hover:text-white transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isRequesting}
+                      onClick={() => {
+                        requestPremium(undefined, { onSettled: () => setShowConfirm(false) })
+                      }}
+                      className="flex-1 rounded-md bg-amber-500 px-2 py-1.5 text-xs font-semibold text-white hover:bg-amber-600 disabled:opacity-50 transition-colors"
+                    >
+                      Confirm
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(true)}
+                  className="mx-2 flex items-center gap-2 rounded-lg border border-amber-500/30 px-3 py-2 text-xs font-medium text-amber-400 hover:bg-amber-500/10 transition-colors"
+                >
+                  <StarIcon />
+                  Request Premium Access
+                </button>
+              )}
+            </>
+          )
+        )}
 
         <button
           type="button"
@@ -105,7 +172,7 @@ export function Sidebar() {
             logout()
             navigate('/login')
           }}
-          className="mt-1 w-full rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-500 hover:bg-slate-800 hover:text-white transition-colors"
+          className="w-full rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-500 hover:bg-slate-800 hover:text-white transition-colors"
         >
           Sign out
         </button>
@@ -130,6 +197,45 @@ function BellIcon() {
         strokeLinejoin="round"
         strokeWidth={2}
         d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+      />
+    </svg>
+  )
+}
+
+function ShieldIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+      />
+    </svg>
+  )
+}
+
+function StarIcon() {
+  return (
+    <svg className="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+      />
+    </svg>
+  )
+}
+
+function SpinnerIcon() {
+  return (
+    <svg className="h-3.5 w-3.5 flex-shrink-0 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
       />
     </svg>
   )

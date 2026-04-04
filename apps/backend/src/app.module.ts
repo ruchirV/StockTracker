@@ -11,6 +11,7 @@ import { PricesModule } from './prices/prices.module'
 import { CandlesModule } from './candles/candles.module'
 import { AlertsModule } from './alerts/alerts.module'
 import { NotificationsModule } from './notifications/notifications.module'
+import { PremiumModule } from './premium/premium.module'
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { NotificationsModule } from './notifications/notifications.module'
     CandlesModule,
     AlertsModule,
     NotificationsModule,
+    PremiumModule,
   ],
 })
 export class AppModule {}

@@ -7,6 +7,7 @@ import { RegisterPage } from '@/pages/RegisterPage'
 import { OAuthCallbackPage } from '@/pages/OAuthCallbackPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { AlertsPage } from '@/pages/AlertsPage'
+import { AdminPage } from '@/pages/AdminPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,6 +30,7 @@ function App() {
             <Route element={<AppShell />}>
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/alerts" element={<AlertsPage />} />
+              <Route path="/admin/premium-requests" element={<AdminPage />} />
             </Route>
           </Route>
 
