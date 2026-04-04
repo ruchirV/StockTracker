@@ -1,0 +1,32 @@
+# Dependencies — reinstalled inside the image
+node_modules
+**/node_modules
+
+# Build outputs — rebuilt inside the image
+dist
+**/dist
+.next
+**/.next
+
+# Local env files — secrets must never enter Docker images
+.env
+**/.env
+.env.*
+**/.env.*
+
+# Dev tooling
+.git
+.github
+*.log
+coverage
+**/coverage
+
+# Docs and non-code files
+docs
+*.md
+!apps/backend/prisma
+
+# Test files — not needed in production image
+**/*.spec.ts
+**/*.test.ts
+**/test

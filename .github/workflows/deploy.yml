@@ -1,0 +1,288 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+# Prevent concurrent deploys — if a new push lands while deploying, cancel the
+# in-progress run and start fresh.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  ECR_BACKEND_REPO: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/stocktracker-backend
+
+jobs:
+  # ── Build & push Docker images to ECR ───────────────────────────────────────
+  docker-push:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        id: meta
+        run: echo "tag=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push backend image
+        run: |
+          docker build \
+            -f apps/backend/Dockerfile \
+            -t $ECR_BACKEND_REPO:${{ steps.meta.outputs.tag }} \
+            -t $ECR_BACKEND_REPO:latest \
+            .
+          docker push $ECR_BACKEND_REPO:${{ steps.meta.outputs.tag }}
+          docker push $ECR_BACKEND_REPO:latest
+
+  # ── Deploy frontend to S3 + invalidate CloudFront (staging) ─────────────────
+  frontend-staging:
+    name: Deploy Frontend (Staging)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend (staging)
+        run: npm run build -w apps/frontend
+        env:
+          VITE_API_URL: ${{ secrets.STAGING_API_URL }}
+          VITE_WS_URL: ${{ secrets.STAGING_WS_URL }}
+
+      - name: Sync to S3
+        run: |
+          aws s3 sync apps/frontend/dist/ s3://${{ secrets.STAGING_FRONTEND_BUCKET }} \
+            --delete \
+            --cache-control "public,max-age=31536000,immutable" \
+            --exclude "index.html"
+          # index.html must not be cached so clients always get the latest shell
+          aws s3 cp apps/frontend/dist/index.html s3://${{ secrets.STAGING_FRONTEND_BUCKET }}/index.html \
+            --cache-control "no-cache,no-store,must-revalidate"
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.STAGING_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+
+  # ── OpenTofu plan + apply (staging) ─────────────────────────────────────────
+  deploy-staging:
+    name: Deploy Staging Infrastructure & ECS
+    runs-on: ubuntu-latest
+    needs: [docker-push, frontend-staging]
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: '1.9.0'
+
+      - name: OpenTofu Init
+        working-directory: infra
+        run: |
+          tofu init \
+            -backend-config="bucket=${{ secrets.TF_BACKEND_BUCKET }}" \
+            -backend-config="key=stocktracker/staging/terraform.tfstate" \
+            -backend-config="region=${{ secrets.AWS_REGION }}" \
+            -backend-config="dynamodb_table=${{ secrets.TF_BACKEND_LOCK_TABLE }}"
+
+      - name: OpenTofu Apply (staging)
+        working-directory: infra
+        run: tofu apply -auto-approve -var-file=envs/staging.tfvars
+        env:
+          TF_VAR_backend_image_tag: ${{ needs.docker-push.outputs.image-tag }}
+
+      - name: Run DB migrations (ECS one-off task)
+        run: |
+          TASK_ARN=$(aws ecs run-task \
+            --cluster stocktracker-staging \
+            --task-definition stocktracker-migrate-staging \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ secrets.STAGING_PRIVATE_SUBNET_IDS }}],securityGroups=[${{ secrets.STAGING_ECS_SG_ID }}]}" \
+            --query 'tasks[0].taskArn' \
+            --output text)
+          echo "Waiting for migration task $TASK_ARN..."
+          aws ecs wait tasks-stopped --cluster stocktracker-staging --tasks "$TASK_ARN"
+          EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster stocktracker-staging \
+            --tasks "$TASK_ARN" \
+            --query 'tasks[0].containers[0].exitCode' \
+            --output text)
+          echo "Migration exit code: $EXIT_CODE"
+          test "$EXIT_CODE" = "0"
+
+      - name: Force ECS service redeploy
+        run: |
+          aws ecs update-service \
+            --cluster stocktracker-staging \
+            --service stocktracker-backend \
+            --force-new-deployment
+
+      - name: Wait for ECS service stability
+        run: |
+          aws ecs wait services-stable \
+            --cluster stocktracker-staging \
+            --services stocktracker-backend
+
+      - name: Smoke test staging
+        run: |
+          curl --fail --retry 5 --retry-delay 10 \
+            ${{ secrets.STAGING_API_URL }}/health
+
+  # ── Playwright E2E against staging ──────────────────────────────────────────
+  e2e-staging:
+    name: E2E Tests (Staging)
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: npx playwright test --project=chromium
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ secrets.STAGING_FRONTEND_URL }}
+          API_URL: ${{ secrets.STAGING_API_URL }}
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  # ── Deploy to production (manual approval gate) ──────────────────────────────
+  deploy-production:
+    name: Deploy Production
+    runs-on: ubuntu-latest
+    needs: e2e-staging
+    environment: production    # GitHub requires manual approval for this environment
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy frontend (production)
+        run: |
+          npm ci
+          npm run build -w apps/frontend
+          aws s3 sync apps/frontend/dist/ s3://${{ secrets.PROD_FRONTEND_BUCKET }} \
+            --delete \
+            --cache-control "public,max-age=31536000,immutable" \
+            --exclude "index.html"
+          aws s3 cp apps/frontend/dist/index.html s3://${{ secrets.PROD_FRONTEND_BUCKET }}/index.html \
+            --cache-control "no-cache,no-store,must-revalidate"
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.PROD_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+        env:
+          VITE_API_URL: ${{ secrets.PROD_API_URL }}
+          VITE_WS_URL: ${{ secrets.PROD_WS_URL }}
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: '1.9.0'
+
+      - name: OpenTofu Init
+        working-directory: infra
+        run: |
+          tofu init \
+            -backend-config="bucket=${{ secrets.TF_BACKEND_BUCKET }}" \
+            -backend-config="key=stocktracker/prod/terraform.tfstate" \
+            -backend-config="region=${{ secrets.AWS_REGION }}" \
+            -backend-config="dynamodb_table=${{ secrets.TF_BACKEND_LOCK_TABLE }}"
+
+      - name: OpenTofu Apply (production)
+        working-directory: infra
+        run: tofu apply -auto-approve -var-file=envs/prod.tfvars
+        env:
+          TF_VAR_backend_image_tag: ${{ needs.docker-push.outputs.image-tag }}
+
+      - name: Run DB migrations (production)
+        run: |
+          TASK_ARN=$(aws ecs run-task \
+            --cluster stocktracker-prod \
+            --task-definition stocktracker-migrate-prod \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ secrets.PROD_PRIVATE_SUBNET_IDS }}],securityGroups=[${{ secrets.PROD_ECS_SG_ID }}]}" \
+            --query 'tasks[0].taskArn' \
+            --output text)
+          aws ecs wait tasks-stopped --cluster stocktracker-prod --tasks "$TASK_ARN"
+          EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster stocktracker-prod \
+            --tasks "$TASK_ARN" \
+            --query 'tasks[0].containers[0].exitCode' \
+            --output text)
+          test "$EXIT_CODE" = "0"
+
+      - name: Force ECS service redeploy
+        run: |
+          aws ecs update-service \
+            --cluster stocktracker-prod \
+            --service stocktracker-backend \
+            --force-new-deployment
+
+      - name: Wait for ECS service stability
+        run: |
+          aws ecs wait services-stable \
+            --cluster stocktracker-prod \
+            --services stocktracker-backend
+
+      - name: Smoke test production
+        run: |
+          curl --fail --retry 5 --retry-delay 10 \
+            ${{ secrets.PROD_API_URL }}/health
