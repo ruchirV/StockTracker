@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StockTracker — Premium Upgrade Mockup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#edfaf3', 100:'#d3f4e3', 500:'#16a34a', 600:'#15803d', 700:'#166534' }
+          },
+          fontFamily: { sans: ['Inter','system-ui','sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Notification panel ───────────────────── */
+    #notif-panel {
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+    #notif-panel.hidden-panel {
+      transform: translateY(-8px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* ── Toast ────────────────────────────────── */
+    .toast {
+      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;
+    }
+    .toast.hidden-panel {
+      transform: translateY(-16px);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* ── Row hover ────────────────────────────── */
+    .stock-row:hover  { background: #f8fafc; }
+    .request-row:hover { background: #f8fafc; }
+
+    /* ── Premium badge glow ───────────────────── */
+    .premium-glow { box-shadow: 0 0 8px rgba(245,158,11,0.4); }
+
+    /* ── Pulse animation for notification badge ── */
+    @keyframes badge-pop {
+      0%,100% { transform: scale(1); }
+      50%      { transform: scale(1.15); }
+    }
+    .badge-pop { animation: badge-pop 1.8s ease-in-out infinite; }
+
+    /* ── Spin for pending button icon ─────────── */
+    @keyframes spin-slow {
+      to { transform: rotate(360deg); }
+    }
+    .spin-slow { animation: spin-slow 2s linear infinite; }
+
+    /* ── Modal entrance ───────────────────────── */
+    .modal-card {
+      transition: transform 0.25s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease;
+    }
+    .modal-enter { transform: scale(1); opacity: 1; }
+    .modal-exit  { transform: scale(0.95); opacity: 0; }
+  </style>
+</head>
+
+<body class="min-h-screen bg-slate-100 font-sans antialiased">
+
+  <!-- ══════════════════════════════════════════
+       STATE SWITCHER
+  ══════════════════════════════════════════ -->
+  <div class="fixed bottom-4 right-4 z-50 bg-white border border-slate-200 rounded-xl shadow-lg p-3 w-52">
+    <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 px-1">Premium Upgrade States</p>
+    <div class="flex flex-col gap-1">
+      <button onclick="showState('free-user')"      class="state-btn px-3 py-1.5 text-xs font-medium rounded-lg text-left" data-state="free-user">Free user — request button</button>
+      <button onclick="showState('confirm-modal')"  class="state-btn px-3 py-1.5 text-xs font-medium rounded-lg text-left" data-state="confirm-modal">Confirm request modal</button>
+      <button onclick="showState('pending')"        class="state-btn px-3 py-1.5 text-xs font-medium rounded-lg text-left" data-state="pending">Request pending</button>
+      <button onclick="showState('admin-panel')"    class="state-btn px-3 py-1.5 text-xs font-medium rounded-lg text-left" data-state="admin-panel">Admin — pending requests</button>
+      <button onclick="showState('admin-reject')"   class="state-btn px-3 py-1.5 text-xs font-medium rounded-lg text-left" data-state="admin-reject">Admin — reject modal</button>
+      <button onclick="showState('user-approved')"  class="state-btn px-3 py-1.5 text-xs font-medium rounded-lg text-left" data-state="user-approved">User — approval notification</button>
+      <button onclick="showState('premium-unlocked')" class="state-btn px-3 py-1.5 text-xs font-medium rounded-lg text-left" data-state="premium-unlocked">Premium unlocked</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       APP SHELL
+  ══════════════════════════════════════════ -->
+  <div class="flex h-screen overflow-hidden">
+
+    <!-- ── SIDEBAR ──────────────────────────── -->
+    <aside class="w-56 bg-slate-900 flex-shrink-0 flex flex-col overflow-hidden">
+
+      <!-- Logo -->
+      <div class="px-4 py-5 border-b border-slate-800">
+        <div class="flex items-center gap-2.5">
+          <div class="w-7 h-7 bg-brand-500 rounded-md flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-white" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <rect x="4" y="6" width="2" height="8" rx="1"/>
+              <line x1="5" y1="3" x2="5" y2="6" stroke="currentColor" stroke-width="1.5"/>
+              <line x1="5" y1="14" x2="5" y2="17" stroke="currentColor" stroke-width="1.5"/>
+              <rect x="9" y="9" width="2" height="5" rx="1" fill="#4ade80"/>
+              <line x1="10" y1="6" x2="10" y2="9" stroke="#4ade80" stroke-width="1.5"/>
+              <rect x="14" y="7" width="2" height="6" rx="1"/>
+              <line x1="15" y1="4" x2="15" y2="7" stroke="currentColor" stroke-width="1.5"/>
+              <line x1="15" y1="13" x2="15" y2="16" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <span class="text-white font-semibold text-base tracking-tight">StockTracker</span>
+        </div>
+      </div>
+
+      <!-- Nav links -->
+      <nav class="flex-1 px-3 py-4 space-y-0.5" aria-label="Main navigation">
+
+        <!-- Dashboard -->
+        <a href="#" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm font-medium transition-colors">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+          </svg>
+          Dashboard
+        </a>
+
+        <!-- Alerts -->
+        <a href="#" class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm font-medium transition-colors">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+          Alerts
+        </a>
+
+        <!-- AI Chat — locked (free / pending states) -->
+        <div id="nav-ai-locked"
+             class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-600 text-sm font-medium cursor-not-allowed select-none"
+             title="Premium required">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 3v-3z"/>
+          </svg>
+          AI Chat
+          <span class="ml-auto premium-glow text-[10px] font-semibold bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded-full">Premium</span>
+        </div>
+
+        <!-- AI Chat — unlocked (premium / admin states) -->
+        <a id="nav-ai-premium" href="#"
+           class="hidden flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 text-sm font-medium transition-colors">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 3v-3z"/>
+          </svg>
+          AI Chat
+          <span class="ml-auto w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
+        </a>
+
+        <!-- Admin link (admin states only) -->
+        <a id="nav-admin" href="#"
+           class="hidden flex items-center gap-2.5 px-3 py-2 rounded-lg bg-slate-800 text-white text-sm font-medium">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+          Admin
+          <span id="admin-badge" class="ml-auto w-4 h-4 bg-amber-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">1</span>
+        </a>
+
+      </nav>
+
+      <!-- User section -->
+      <div class="px-3 py-4 border-t border-slate-800 space-y-1">
+
+        <!-- Free user info -->
+        <div id="user-section-free" class="flex items-center gap-2.5 px-2 py-1.5 rounded-lg">
+          <div class="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0" aria-hidden="true">
+            <span class="text-white text-xs font-semibold">A</span>
+          </div>
+          <div class="min-w-0">
+            <p class="text-white text-xs font-medium truncate">alice@example.com</p>
+            <p class="text-slate-400 text-xs">Free plan</p>
+          </div>
+        </div>
+
+        <!-- Admin user info -->
+        <div id="user-section-admin" class="hidden flex items-center gap-2.5 px-2 py-1.5 rounded-lg">
+          <div class="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0" aria-hidden="true">
+            <span class="text-white text-xs font-semibold">B</span>
+          </div>
+          <div class="min-w-0">
+            <p class="text-white text-xs font-medium truncate">bob@stocktracker.dev</p>
+            <p class="text-amber-400 text-xs font-semibold">Admin</p>
+          </div>
+        </div>
+
+        <!-- Premium user info -->
+        <div id="user-section-premium" class="hidden flex items-center gap-2.5 px-2 py-1.5 rounded-lg">
+          <div class="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0" aria-hidden="true">
+            <span class="text-white text-xs font-semibold">A</span>
+          </div>
+          <div class="min-w-0">
+            <p class="text-white text-xs font-medium truncate">alice@example.com</p>
+            <p class="text-amber-400 text-xs font-semibold">Premium</p>
+          </div>
+        </div>
+
+        <!-- CTA: Request premium (free user, no pending request) -->
+        <button id="btn-request"
+                onclick="showState('confirm-modal')"
+                class="w-full px-3 py-2 text-xs font-medium text-amber-400 border border-amber-500/30 hover:bg-amber-500/10 rounded-lg transition-colors flex items-center gap-2">
+          <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+          </svg>
+          Request Premium Access
+        </button>
+
+        <!-- CTA: Request pending (disabled) -->
+        <button id="btn-pending" disabled
+                class="hidden w-full px-3 py-2 text-xs font-medium text-slate-500 border border-slate-700 rounded-lg cursor-not-allowed flex items-center gap-2">
+          <svg class="w-3.5 h-3.5 flex-shrink-0 spin-slow" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Request pending…
+        </button>
+
+        <!-- Sign out -->
+        <button class="w-full text-left px-3 py-1.5 text-xs text-slate-500 hover:bg-slate-800 hover:text-white rounded-lg transition-colors">
+          Sign out
+        </button>
+
+      </div>
+    </aside>
+
+    <!-- ── MAIN AREA ───────────────────────── -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+
+      <!-- TOPBAR -->
+      <header class="h-14 bg-white border-b border-slate-200 flex items-center px-6 gap-4 flex-shrink-0 relative z-20">
+        <h1 id="topbar-dashboard" class="text-sm font-semibold text-slate-800">Dashboard</h1>
+        <h1 id="topbar-admin"     class="hidden text-sm font-semibold text-slate-800">Premium Requests</h1>
+
+        <div class="ml-auto flex items-center gap-3">
+          <!-- WS live dot -->
+          <div class="flex items-center gap-1.5">
+            <div class="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></div>
+            <span class="text-xs text-slate-400 hidden sm:block">Live</span>
+          </div>
+          <!-- Notification bell -->
+          <button id="notif-btn"
+                  onclick="toggleNotifPanel()"
+                  class="relative p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                  aria-label="Notifications">
+            <svg class="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            <span id="notif-badge"
+                  class="hidden absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center badge-pop">1</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- TOAST: request submitted -->
+      <div id="toast-submitted"
+           class="toast hidden-panel pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 z-40 bg-slate-800 text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 whitespace-nowrap">
+        <svg class="w-3.5 h-3.5 text-brand-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+        Request submitted — an admin will review it shortly
+      </div>
+
+      <!-- TOAST: premium unlocked -->
+      <div id="toast-unlocked"
+           class="toast hidden-panel pointer-events-none absolute top-4 left-1/2 -translate-x-1/2 z-40 bg-brand-500 text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 whitespace-nowrap">
+        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        Premium access unlocked — AI Chat is now available
+      </div>
+
+      <!-- NOTIFICATION PANEL -->
+      <div id="notif-panel"
+           class="hidden-panel absolute top-14 right-4 z-30 w-80 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100">
+          <span class="text-sm font-semibold text-slate-800">Notifications</span>
+          <button onclick="markAllRead()" class="text-xs text-slate-400 hover:text-slate-600 transition-colors">Mark all read</button>
+        </div>
+        <!-- Approval notification (unread) -->
+        <div id="notif-row-approval"
+             class="flex items-start gap-3 px-4 py-3.5 bg-green-50 cursor-pointer hover:bg-green-100 transition-colors border-b border-green-100"
+             onclick="dismissApproval()">
+          <div class="w-7 h-7 rounded-full bg-brand-500 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-xs font-semibold text-slate-800">Premium access approved!</p>
+            <p class="text-xs text-slate-500 mt-0.5 leading-relaxed">Your request has been approved. AI Chat is now unlocked — click to dismiss and explore.</p>
+            <p class="text-[10px] text-slate-400 mt-1.5">Just now</p>
+          </div>
+          <div class="w-2 h-2 rounded-full bg-green-500 flex-shrink-0 mt-1.5"></div>
+        </div>
+        <div class="px-4 py-5 text-center text-xs text-slate-400">No other notifications</div>
+      </div>
+
+      <!-- ════════════════════════════════════
+           MAIN PANEL: Dashboard
+      ════════════════════════════════════ -->
+      <main id="panel-dashboard" class="flex-1 overflow-y-auto p-6">
+        <div class="max-w-3xl mx-auto space-y-4">
+
+          <!-- Watchlist card -->
+          <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <h2 class="text-sm font-semibold text-slate-800">Watchlist</h2>
+              <button class="flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-700 transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                Add stock
+              </button>
+            </div>
+            <!-- Column headers -->
+            <div class="flex items-center px-5 py-2 border-b border-slate-50 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              <span class="w-20">Symbol</span>
+              <span class="flex-1">Company</span>
+              <span class="w-28 text-right">Price / Chg%</span>
+              <span class="w-8"></span>
+            </div>
+            <!-- Rows -->
+            <div class="stock-row flex items-center px-5 py-3 border-b border-slate-50">
+              <span class="w-20 text-xs font-semibold text-slate-800">AAPL</span>
+              <span class="flex-1 text-xs text-slate-500 truncate">Apple Inc.</span>
+              <div class="w-28 text-right">
+                <span class="text-xs font-medium text-slate-800 tabular-nums">$192.50</span>
+                <span class="ml-1.5 text-xs font-medium text-brand-600 tabular-nums">+1.24%</span>
+              </div>
+              <button class="w-8 flex justify-end text-slate-300 hover:text-red-400 transition-colors" aria-label="Remove AAPL">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <div class="stock-row flex items-center px-5 py-3 border-b border-slate-50">
+              <span class="w-20 text-xs font-semibold text-slate-800">TSLA</span>
+              <span class="flex-1 text-xs text-slate-500 truncate">Tesla, Inc.</span>
+              <div class="w-28 text-right">
+                <span class="text-xs font-medium text-slate-800 tabular-nums">$248.10</span>
+                <span class="ml-1.5 text-xs font-medium text-red-500 tabular-nums">-0.42%</span>
+              </div>
+              <button class="w-8 flex justify-end text-slate-300 hover:text-red-400 transition-colors" aria-label="Remove TSLA">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <div class="stock-row flex items-center px-5 py-3">
+              <span class="w-20 text-xs font-semibold text-slate-800">NVDA</span>
+              <span class="flex-1 text-xs text-slate-500 truncate">NVIDIA Corporation</span>
+              <div class="w-28 text-right">
+                <span class="text-xs font-medium text-slate-800 tabular-nums">$878.35</span>
+                <span class="ml-1.5 text-xs font-medium text-brand-600 tabular-nums">+2.87%</span>
+              </div>
+              <button class="w-8 flex justify-end text-slate-300 hover:text-red-400 transition-colors" aria-label="Remove NVDA">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Admin email preview card (shown only in 'pending' state) -->
+          <div id="admin-email-preview" class="hidden bg-white rounded-xl border border-amber-200 overflow-hidden">
+            <div class="flex items-center gap-2.5 px-5 py-3 bg-amber-50 border-b border-amber-100">
+              <svg class="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+              <span class="text-xs font-semibold text-amber-800">Admin notified — email sent to bob@stocktracker.dev</span>
+              <span class="ml-auto text-[10px] text-amber-500 bg-amber-100 px-2 py-0.5 rounded-full">via Mailpit locally</span>
+            </div>
+            <div class="px-5 py-4 font-mono text-[11px] text-slate-600 leading-relaxed space-y-1">
+              <p><span class="text-slate-400">From:</span>    noreply@stocktracker.dev</p>
+              <p><span class="text-slate-400">To:</span>      bob@stocktracker.dev</p>
+              <p><span class="text-slate-400">Subject:</span> [StockTracker] New premium request from alice@example.com</p>
+              <div class="mt-3 pt-3 border-t border-slate-100 text-slate-500 leading-6">
+                A user has requested premium access:<br/>
+                <span class="text-slate-700 font-semibold">Email:</span>&nbsp;&nbsp;&nbsp;&nbsp; alice@example.com<br/>
+                <span class="text-slate-700 font-semibold">Requested:</span> Apr 3, 2026 14:32 UTC<br/><br/>
+                Review in the admin panel:<br/>
+                <span class="text-brand-600">http://localhost:5173/admin/premium-requests</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </main>
+
+      <!-- ════════════════════════════════════
+           MAIN PANEL: Admin — Premium Requests
+      ════════════════════════════════════ -->
+      <main id="panel-admin" class="hidden flex-1 overflow-y-auto p-6">
+        <div class="max-w-4xl mx-auto">
+
+          <!-- Filter tabs -->
+          <div class="flex items-center gap-1 mb-5 bg-white rounded-xl border border-slate-200 p-1 w-fit">
+            <button id="tab-pending"
+                    onclick="switchTab('pending')"
+                    class="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-lg bg-slate-900 text-white">
+              Pending
+              <span class="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">1</span>
+            </button>
+            <button id="tab-approved"
+                    onclick="switchTab('approved')"
+                    class="px-4 py-1.5 text-xs font-medium rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-colors">
+              Approved
+            </button>
+            <button id="tab-rejected"
+                    onclick="switchTab('rejected')"
+                    class="px-4 py-1.5 text-xs font-medium rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-colors">
+              Rejected
+            </button>
+          </div>
+
+          <!-- Requests table -->
+          <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <!-- Table header -->
+            <div class="flex items-center px-5 py-3 border-b border-slate-100 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              <div class="flex-1">User</div>
+              <div class="w-44">Requested</div>
+              <div class="w-28">Status</div>
+              <div class="w-44 text-right">Actions</div>
+            </div>
+
+            <!-- Pending rows (shown on Pending tab) -->
+            <div id="rows-pending">
+              <div class="request-row flex items-center px-5 py-4">
+                <div class="flex-1 flex items-center gap-2.5">
+                  <div class="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0" aria-hidden="true">
+                    <span class="text-white text-xs font-semibold">A</span>
+                  </div>
+                  <div>
+                    <p class="text-xs font-medium text-slate-800">alice@example.com</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">First request</p>
+                  </div>
+                </div>
+                <div class="w-44 text-xs text-slate-500">Apr 3, 2026 · 14:32</div>
+                <div class="w-28">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    Pending
+                  </span>
+                </div>
+                <div class="w-44 flex justify-end gap-2">
+                  <button onclick="showState('admin-reject')"
+                          class="px-3 py-1.5 text-[11px] font-medium rounded-lg bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 transition-colors">
+                    Reject
+                  </button>
+                  <button onclick="handleApprove()"
+                          class="px-3 py-1.5 text-[11px] font-semibold rounded-lg bg-brand-500 text-white hover:bg-brand-600 transition-colors">
+                    Approve
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Approved rows (shown on Approved tab) -->
+            <div id="rows-approved" class="hidden">
+              <div class="request-row flex items-center px-5 py-4 border-b border-slate-50">
+                <div class="flex-1 flex items-center gap-2.5">
+                  <div class="w-7 h-7 rounded-full bg-teal-600 flex items-center justify-center flex-shrink-0">
+                    <span class="text-white text-xs font-semibold">C</span>
+                  </div>
+                  <div>
+                    <p class="text-xs font-medium text-slate-800">carol@example.com</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">First request</p>
+                  </div>
+                </div>
+                <div class="w-44 text-xs text-slate-500">Apr 1, 2026 · 09:15</div>
+                <div class="w-28">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-100 text-green-700">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                    Approved
+                  </span>
+                </div>
+                <div class="w-44 text-right text-[10px] text-slate-400">Apr 1, 2026</div>
+              </div>
+              <!-- Empty state note for alice's pending request -->
+              <div class="px-5 py-4 text-xs text-slate-400 text-center">
+                alice@example.com request is still pending
+              </div>
+            </div>
+
+            <!-- Rejected rows (shown on Rejected tab) -->
+            <div id="rows-rejected" class="hidden">
+              <div id="rejected-dave-row" class="request-row flex items-center px-5 py-4 border-b border-slate-50">
+                <div class="flex-1 flex items-center gap-2.5">
+                  <div class="w-7 h-7 rounded-full bg-orange-600 flex items-center justify-center flex-shrink-0">
+                    <span class="text-white text-xs font-semibold">D</span>
+                  </div>
+                  <div>
+                    <p class="text-xs font-medium text-slate-800">dave@example.com</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">First request</p>
+                  </div>
+                </div>
+                <div class="w-44 text-xs text-slate-500">Mar 28, 2026 · 11:40</div>
+                <div class="w-28">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 text-red-700">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                    Rejected
+                  </span>
+                </div>
+                <div class="w-44 text-right text-[10px] text-slate-400 italic">Not eligible at this time</div>
+              </div>
+              <!-- Alice's rejected row (appended by handleReject) -->
+              <div id="rejected-alice-row" class="hidden request-row flex items-center px-5 py-4">
+                <div class="flex-1 flex items-center gap-2.5">
+                  <div class="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0">
+                    <span class="text-white text-xs font-semibold">A</span>
+                  </div>
+                  <div>
+                    <p class="text-xs font-medium text-slate-800">alice@example.com</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">First request</p>
+                  </div>
+                </div>
+                <div class="w-44 text-xs text-slate-500">Apr 3, 2026 · 14:32</div>
+                <div class="w-28">
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-red-100 text-red-700">
+                    <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                    Rejected
+                  </span>
+                </div>
+                <div class="w-44 text-right text-[10px] text-slate-400 italic">Not eligible at this time</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </main>
+
+    </div><!-- end main area -->
+
+  </div><!-- end app shell -->
+
+  <!-- ══════════════════════════════════════════
+       OVERLAYS
+  ══════════════════════════════════════════ -->
+
+  <!-- CONFIRM REQUEST MODAL -->
+  <div id="modal-confirm" class="hidden fixed inset-0 z-40 flex items-center justify-center">
+    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="showState('free-user')"></div>
+    <div class="modal-card modal-enter relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+      <!-- Icon + title -->
+      <div class="bg-gradient-to-br from-amber-50 to-orange-50 px-6 pt-8 pb-6 flex flex-col items-center text-center">
+        <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-4">
+          <svg class="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+          </svg>
+        </div>
+        <h2 class="text-base font-semibold text-slate-800">Request Premium Access</h2>
+        <p class="mt-2 text-xs text-slate-500 leading-relaxed max-w-xs">
+          Send a request to the admin to enable premium features, including the AI portfolio chatbot.
+        </p>
+      </div>
+      <!-- Benefits -->
+      <ul class="px-6 py-4 space-y-2.5 border-b border-slate-100">
+        <li class="flex items-center gap-2.5 text-xs text-slate-600">
+          <svg class="w-3.5 h-3.5 text-brand-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          AI portfolio chatbot — ask questions about your holdings
+        </li>
+        <li class="flex items-center gap-2.5 text-xs text-slate-600">
+          <svg class="w-3.5 h-3.5 text-brand-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          Context-aware answers grounded in live prices
+        </li>
+        <li class="flex items-center gap-2.5 text-xs text-slate-600">
+          <svg class="w-3.5 h-3.5 text-brand-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+          Company fundamentals and active alert context
+        </li>
+      </ul>
+      <!-- Actions -->
+      <div class="px-6 py-4 flex gap-3">
+        <button onclick="showState('free-user')"
+                class="flex-1 px-4 py-2.5 text-xs font-medium rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
+          Maybe later
+        </button>
+        <button onclick="submitRequest()"
+                class="flex-1 px-4 py-2.5 text-xs font-semibold rounded-xl bg-amber-500 text-white hover:bg-amber-600 transition-colors flex items-center justify-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+          </svg>
+          Send Request
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- REJECT MODAL -->
+  <div id="modal-reject" class="hidden fixed inset-0 z-40 flex items-center justify-center">
+    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="showState('admin-panel')"></div>
+    <div class="modal-card modal-enter relative bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden">
+      <div class="px-6 pt-6 pb-4 border-b border-slate-100">
+        <div class="flex items-center gap-2.5 mb-1">
+          <div class="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+            <svg class="w-3.5 h-3.5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </div>
+          <h2 class="text-base font-semibold text-slate-800">Reject Request</h2>
+        </div>
+        <p class="text-xs text-slate-500 mt-1">
+          Rejecting premium request from
+          <span class="font-medium text-slate-700">alice@example.com</span>
+        </p>
+      </div>
+      <div class="px-6 py-4 border-b border-slate-100">
+        <label class="block text-xs font-medium text-slate-700 mb-1.5">
+          Admin note
+          <span class="text-slate-400 font-normal ml-1">(optional — included in notification email)</span>
+        </label>
+        <textarea id="reject-note"
+                  rows="3"
+                  placeholder="e.g. Not eligible at this time. You may re-apply after 30 days."
+                  class="w-full text-xs border border-slate-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 placeholder:text-slate-300 leading-relaxed"></textarea>
+      </div>
+      <div class="px-6 py-4 flex gap-3">
+        <button onclick="showState('admin-panel')"
+                class="flex-1 px-4 py-2.5 text-xs font-medium rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">
+          Cancel
+        </button>
+        <button onclick="handleReject()"
+                class="flex-1 px-4 py-2.5 text-xs font-semibold rounded-xl bg-red-500 text-white hover:bg-red-600 transition-colors">
+          Confirm Rejection
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       JAVASCRIPT — STATE MACHINE
+  ══════════════════════════════════════════ -->
+  <script>
+    let notifOpen = false
+
+    // ── Central state switcher ─────────────────────────────────────────────────
+    function showState(state) {
+
+      // Update switcher button styles
+      document.querySelectorAll('.state-btn').forEach(btn => {
+        const active = btn.dataset.state === state
+        btn.className = `state-btn px-3 py-1.5 text-xs font-medium rounded-lg text-left ${
+          active ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+        }`
+      })
+
+      // Derived booleans for readability
+      const isAdmin    = state === 'admin-panel' || state === 'admin-reject'
+      const isPremium  = state === 'premium-unlocked'
+      const isPending  = state === 'pending' || state === 'user-approved'
+      const isFree     = !isAdmin && !isPremium && !isPending
+
+      // ── Sidebar user section ────────────────────────────
+      el('user-section-free').classList.toggle('hidden', !isFree)
+      el('user-section-admin').classList.toggle('hidden', !isAdmin)
+      el('user-section-premium').classList.toggle('hidden', !isPremium)
+
+      // ── AI Chat nav ─────────────────────────────────────
+      el('nav-ai-locked').classList.toggle('hidden', isPremium || isAdmin)
+      el('nav-ai-premium').classList.toggle('hidden', !isPremium && !isAdmin)
+
+      // ── Admin nav link ──────────────────────────────────
+      el('nav-admin').classList.toggle('hidden', !isAdmin)
+
+      // ── Request / pending buttons ───────────────────────
+      el('btn-request').classList.toggle('hidden', !isFree)
+      el('btn-pending').classList.toggle('hidden', !isPending)
+
+      // ── Main panels ─────────────────────────────────────
+      el('panel-dashboard').classList.toggle('hidden', isAdmin)
+      el('panel-admin').classList.toggle('hidden', !isAdmin)
+
+      // ── Topbar title ────────────────────────────────────
+      el('topbar-dashboard').classList.toggle('hidden', isAdmin)
+      el('topbar-admin').classList.toggle('hidden', !isAdmin)
+
+      // ── Overlays ────────────────────────────────────────
+      el('modal-confirm').classList.toggle('hidden', state !== 'confirm-modal')
+      el('modal-reject').classList.toggle('hidden', state !== 'admin-reject')
+
+      // ── Admin email preview card ─────────────────────────
+      el('admin-email-preview').classList.toggle('hidden', state !== 'pending')
+
+      // ── Notification badge ───────────────────────────────
+      el('notif-badge').classList.toggle('hidden', state !== 'user-approved')
+
+      // ── Notification panel ───────────────────────────────
+      notifOpen = state === 'user-approved'
+      el('notif-panel').classList.toggle('hidden-panel', !notifOpen)
+
+      // ── Toasts ───────────────────────────────────────────
+      el('toast-submitted').classList.toggle('hidden-panel', state !== 'pending')
+      el('toast-unlocked').classList.toggle('hidden-panel', state !== 'premium-unlocked')
+
+      // ── Admin tab reset ───────────────────────────────────
+      if (isAdmin) switchTab('pending')
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    function el(id) { return document.getElementById(id) }
+
+    // ── Confirm modal actions ──────────────────────────────────────────────────
+    function submitRequest() {
+      showState('pending')
+    }
+
+    // ── Admin tab switcher ──────────────────────────────────────────────────────
+    function switchTab(active) {
+      ['pending','approved','rejected'].forEach(t => {
+        const btn = el(`tab-${t}`)
+        const isActive = t === active
+        btn.className = `px-4 py-1.5 text-xs rounded-lg transition-colors ${
+          isActive
+            ? 'font-semibold bg-slate-900 text-white'
+            : 'font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+        }`
+        el(`rows-${t}`).classList.toggle('hidden', !isActive)
+      })
+    }
+
+    // ── Admin approve ──────────────────────────────────────────────────────────
+    function handleApprove() {
+      // Jump to user-approved state: show the effect from the user's perspective
+      showState('user-approved')
+    }
+
+    // ── Admin reject ────────────────────────────────────────────────────────────
+    function handleReject() {
+      // Show alice's row in rejected tab
+      el('rejected-alice-row').classList.remove('hidden')
+      showState('admin-panel')
+      // Override tab to Rejected to show the result
+      switchTab('rejected')
+    }
+
+    // ── Notification panel ──────────────────────────────────────────────────────
+    function toggleNotifPanel() {
+      notifOpen = !notifOpen
+      el('notif-panel').classList.toggle('hidden-panel', !notifOpen)
+    }
+
+    function markAllRead() {
+      el('notif-badge').classList.add('hidden')
+    }
+
+    // ── Dismiss approval notification → unlock premium ──────────────────────────
+    function dismissApproval() {
+      showState('premium-unlocked')
+    }
+
+    // ── Init ────────────────────────────────────────────────────────────────────
+    showState('free-user')
+  </script>
+
+</body>
+</html>

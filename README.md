@@ -344,16 +344,19 @@ Production         (manual approval gate)
 
 ## Delivery Phases
 
-| Phase | Scope                                                            | Status      |
-| ----- | ---------------------------------------------------------------- | ----------- |
-| 1     | Monorepo + auth (email/password + OAuth) + dashboard shell       | ✅ Complete |
-| 2     | Live data feed + watchlist (Finnhub WebSocket, virtualised list) | ✅ Complete |
-| 3     | Historical charts (D3 candlestick, 1D/1W/1M)                     | ✅ Complete |
-| 4     | Price alerts + email + in-app notifications + sidebar nav        | ✅ Complete |
-| 5     | Premium AI chatbot (LLM adapter, streaming, portfolio context)   | Planning    |
-| 6     | CI/CD + Terraform + AWS cloud deploy + WCAG audit                | Pending     |
+| Phase  | Scope                                                            | Status      |
+| ------ | ---------------------------------------------------------------- | ----------- |
+| 1      | Monorepo + auth (email/password + OAuth) + dashboard shell       | ✅ Complete |
+| 2      | Live data feed + watchlist (Finnhub WebSocket, virtualised list) | ✅ Complete |
+| 3      | Historical charts (D3 candlestick, 1D/1W/1M)                     | ✅ Complete |
+| 4      | Price alerts + email + in-app notifications + sidebar nav        | ✅ Complete |
+| 4b     | Premium upgrade request flow (user request → admin approval)     | Planning    |
+| 5      | Premium AI chatbot (LLM adapter, streaming, portfolio context)   | Planning    |
+| 6      | CI/CD + Terraform + AWS cloud deploy + WCAG audit                | Pending     |
 
-Detailed plans: [Phase 1](docs/phase1.md) · [Phase 2](docs/phase2.md) · [Phase 3](docs/phase3.md) · [Phase 4](docs/phase4.md) · [Phase 5](docs/phase5.md)
+Detailed plans: [Phase 1](docs/phase1.md) · [Phase 2](docs/phase2.md) · [Phase 3](docs/phase3.md) · [Phase 4](docs/phase4.md) · [Phase 4b](docs/premium-upgrade.md) · [Phase 5](docs/phase5.md)
+
+Operations: [Admin bootstrap & password management](docs/admin-bootstrap.md)
 
 ---
 

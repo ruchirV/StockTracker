@@ -50,6 +50,10 @@ Thumbs.db
 *.sln
 *.sw?
 
+# Internal ops docs — not for public repo
+docs/admin-bootstrap.md
+docs/premium-upgrade.md
+
 # Terraform state — contains secrets
 *.tfstate
 *.tfstate.*
