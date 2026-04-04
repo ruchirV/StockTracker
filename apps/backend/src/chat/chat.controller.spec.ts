@@ -11,7 +11,7 @@ const mockContextAssembler = {
   buildSystemPrompt: jest.fn(),
 }
 
-async function* fakeStream(tokens: string[]) {
+function* fakeStream(tokens: string[]) {
   for (const t of tokens) yield t
 }
 
@@ -41,8 +41,10 @@ describe('ChatController', () => {
       ],
     })
       // Override guards so tests aren't blocked by JWT/Premium checks
-      .overrideGuard(JwtAuthGuard).useValue({ canActivate: () => true })
-      .overrideGuard(PremiumGuard).useValue({ canActivate: () => true })
+      .overrideGuard(JwtAuthGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(PremiumGuard)
+      .useValue({ canActivate: () => true })
       .compile()
 
     controller = module.get<ChatController>(ChatController)
@@ -51,7 +53,14 @@ describe('ChatController', () => {
 
   describe('getContext', () => {
     it('returns assembled context for the symbol', async () => {
-      const ctx = { symbol: 'AAPL', companyName: 'Apple Inc.', currentPrice: 192.5, changePercent: 1.24, industry: 'Technology', activeAlerts: [] }
+      const ctx = {
+        symbol: 'AAPL',
+        companyName: 'Apple Inc.',
+        currentPrice: 192.5,
+        changePercent: 1.24,
+        industry: 'Technology',
+        activeAlerts: [],
+      }
       mockContextAssembler.assembleContext.mockResolvedValue(ctx)
 
       const req = { user: { userId: 'user-1', isPremium: true, isAdmin: false, email: 'a@b.com' } }
@@ -85,7 +94,7 @@ describe('ChatController', () => {
 
     it('writes error chunk when LLM adapter throws', async () => {
       mockContextAssembler.buildSystemPrompt.mockResolvedValue('system prompt')
-      mockLLMAdapter.streamChat.mockImplementation(function* () {
+      mockLLMAdapter.streamChat.mockImplementation(() => {
         throw new Error('LLM unavailable')
       })
 
