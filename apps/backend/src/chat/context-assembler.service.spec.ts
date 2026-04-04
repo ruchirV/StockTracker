@@ -48,13 +48,31 @@ describe('ContextAssemblerService', () => {
         changePercent: '1.24',
       })
       mockAlerts.list.mockResolvedValue([
-        { id: 'a1', symbol: 'AAPL', threshold: 200, direction: 'above', isActive: true, createdAt: '' },
-        { id: 'a2', symbol: 'TSLA', threshold: 250, direction: 'below', isActive: true, createdAt: '' },
+        {
+          id: 'a1',
+          symbol: 'AAPL',
+          threshold: 200,
+          direction: 'above',
+          isActive: true,
+          createdAt: '',
+        },
+        {
+          id: 'a2',
+          symbol: 'TSLA',
+          threshold: 250,
+          direction: 'below',
+          isActive: true,
+          createdAt: '',
+        },
       ])
       mockRedis.get.mockResolvedValue(null) // no cached fundamentals
 
       // Stub out getFundamentals HTTP call — returns null when no cache and axios would fail
-      jest.spyOn(service as unknown as { getFundamentals: () => Promise<null> }, 'getFundamentals' as never)
+      jest
+        .spyOn(
+          service as unknown as { getFundamentals: () => Promise<null> },
+          'getFundamentals' as never,
+        )
         .mockResolvedValue(null as never)
 
       const ctx = await service.assembleContext('user-1', 'AAPL')
@@ -70,7 +88,11 @@ describe('ContextAssemblerService', () => {
     it('returns null price when Redis cache is empty', async () => {
       mockRedis.hgetall.mockResolvedValue({})
       mockAlerts.list.mockResolvedValue([])
-      jest.spyOn(service as unknown as { getFundamentals: () => Promise<null> }, 'getFundamentals' as never)
+      jest
+        .spyOn(
+          service as unknown as { getFundamentals: () => Promise<null> },
+          'getFundamentals' as never,
+        )
         .mockResolvedValue(null as never)
 
       const ctx = await service.assembleContext('user-1', 'MSFT')
@@ -88,7 +110,12 @@ describe('ContextAssemblerService', () => {
       mockRedis.hgetall.mockResolvedValue({ price: '192.50', changePercent: '1.24' })
       mockAlerts.list.mockResolvedValue([])
       mockRedis.get.mockResolvedValue(
-        JSON.stringify({ name: 'Apple Inc.', ticker: 'AAPL', finnhubIndustry: 'Technology', marketCapitalization: 2900 }),
+        JSON.stringify({
+          name: 'Apple Inc.',
+          ticker: 'AAPL',
+          finnhubIndustry: 'Technology',
+          marketCapitalization: 2900,
+        }),
       )
 
       const prompt = await service.buildSystemPrompt('user-1', 'AAPL')
@@ -104,7 +131,11 @@ describe('ContextAssemblerService', () => {
       mockRedis.hgetall.mockResolvedValue({})
       mockAlerts.list.mockResolvedValue([])
       mockRedis.get.mockResolvedValue(null)
-      jest.spyOn(service as unknown as { getFundamentals: () => Promise<null> }, 'getFundamentals' as never)
+      jest
+        .spyOn(
+          service as unknown as { getFundamentals: () => Promise<null> },
+          'getFundamentals' as never,
+        )
         .mockResolvedValue(null as never)
 
       const prompt = await service.buildSystemPrompt('user-1', 'NVDA')

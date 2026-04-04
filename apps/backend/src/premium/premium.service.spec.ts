@@ -44,7 +44,13 @@ const mockEmail = {
 }
 
 const mockNotifications = {
-  create: jest.fn().mockResolvedValue({ id: 'notif-1', message: 'test', isRead: false, alertId: null, createdAt: NOW.toISOString() }),
+  create: jest.fn().mockResolvedValue({
+    id: 'notif-1',
+    message: 'test',
+    isRead: false,
+    alertId: null,
+    createdAt: NOW.toISOString(),
+  }),
 }
 
 const mockConfig = {
@@ -85,7 +91,7 @@ describe('PremiumService', () => {
         data: { userId: 'user-1' },
       })
       // Admin email is fire-and-forget (void) — just assert it was called
-      await new Promise(process.nextTick)
+      await new Promise<void>((resolve) => process.nextTick(resolve))
       expect(mockEmail.sendPremiumRequestReceived).toHaveBeenCalledWith(
         'admin@stocktracker.dev',
         'alice@example.com',
@@ -118,7 +124,7 @@ describe('PremiumService', () => {
 
       expect(result.status).toBe('approved')
       expect(mockPrisma.$transaction).toHaveBeenCalled()
-      await new Promise(process.nextTick)
+      await new Promise<void>((resolve) => process.nextTick(resolve))
       expect(mockNotifications.create).toHaveBeenCalledWith(
         'user-1',
         null,
@@ -138,15 +144,22 @@ describe('PremiumService', () => {
   describe('reject', () => {
     it('rejects with optional admin note', async () => {
       mockPrisma.premiumRequest.findUnique.mockResolvedValue(mockPendingRequest)
-      const rejectedRequest = { ...mockPendingRequest, status: 'rejected', adminNote: 'Not eligible' }
+      const rejectedRequest = {
+        ...mockPendingRequest,
+        status: 'rejected',
+        adminNote: 'Not eligible',
+      }
       mockPrisma.premiumRequest.update.mockResolvedValue(rejectedRequest)
 
       const result = await service.reject('req-1', 'Not eligible')
 
       expect(result.status).toBe('rejected')
       expect(result.adminNote).toBe('Not eligible')
-      await new Promise(process.nextTick)
-      expect(mockEmail.sendPremiumRejected).toHaveBeenCalledWith('alice@example.com', 'Not eligible')
+      await new Promise<void>((resolve) => process.nextTick(resolve))
+      expect(mockEmail.sendPremiumRejected).toHaveBeenCalledWith(
+        'alice@example.com',
+        'Not eligible',
+      )
     })
 
     it('rejects without admin note', async () => {
@@ -156,7 +169,7 @@ describe('PremiumService', () => {
 
       await service.reject('req-1')
 
-      await new Promise(process.nextTick)
+      await new Promise<void>((resolve) => process.nextTick(resolve))
       expect(mockNotifications.create).toHaveBeenCalledWith(
         'user-1',
         null,
