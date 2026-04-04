@@ -19,7 +19,8 @@ describe('SearchController', () => {
       controllers: [SearchController],
       providers: [{ provide: ConfigService, useValue: mockConfig }],
     })
-      .overrideGuard(JwtAuthGuard).useValue({ canActivate: () => true })
+      .overrideGuard(JwtAuthGuard)
+      .useValue({ canActivate: () => true })
       .compile()
 
     controller = module.get<SearchController>(SearchController)
@@ -31,9 +32,19 @@ describe('SearchController', () => {
       data: {
         count: 3,
         result: [
-          { symbol: 'AAPL', description: 'Apple Inc.', displaySymbol: 'AAPL', type: 'Common Stock' },
+          {
+            symbol: 'AAPL',
+            description: 'Apple Inc.',
+            displaySymbol: 'AAPL',
+            type: 'Common Stock',
+          },
           { symbol: 'AAPLX', description: 'Some fund', displaySymbol: 'AAPLX', type: 'Fund' },
-          { symbol: 'AAPL.SW', description: 'Apple Switzerland', displaySymbol: 'AAPL.SW', type: 'Common Stock' },
+          {
+            symbol: 'AAPL.SW',
+            description: 'Apple Switzerland',
+            displaySymbol: 'AAPL.SW',
+            type: 'Common Stock',
+          },
         ],
       },
     })
@@ -48,12 +59,14 @@ describe('SearchController', () => {
   it('returns empty array for empty query', async () => {
     const results = await controller.search('')
     expect(results).toEqual([])
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(mockedAxios.get).not.toHaveBeenCalled()
   })
 
   it('calls Finnhub with uppercased query', async () => {
     mockedAxios.get.mockResolvedValue({ data: { count: 0, result: [] } })
     await controller.search('nvda')
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(mockedAxios.get).toHaveBeenCalledWith(
       expect.stringContaining('finnhub'),
       expect.objectContaining({ params: expect.objectContaining({ q: 'NVDA' }) as object }),
