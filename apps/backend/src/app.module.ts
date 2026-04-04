@@ -12,6 +12,7 @@ import { CandlesModule } from './candles/candles.module'
 import { AlertsModule } from './alerts/alerts.module'
 import { NotificationsModule } from './notifications/notifications.module'
 import { PremiumModule } from './premium/premium.module'
+import { ChatModule } from './chat/chat.module'
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { PremiumModule } from './premium/premium.module'
     AlertsModule,
     NotificationsModule,
     PremiumModule,
+    ChatModule,
   ],
 })
 export class AppModule {}

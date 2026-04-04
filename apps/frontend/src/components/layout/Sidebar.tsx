@@ -4,6 +4,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { useLogout } from '@/hooks/useAuth'
 import { useNotificationStore } from '@/stores/notificationStore'
 import { usePremiumRequestStatus, useRequestPremium } from '@/hooks/usePremium'
+import { useChatStore } from '@/stores/chatStore'
 
 function getAvatarColor(email: string): string {
   const colors = [
@@ -27,6 +28,7 @@ export function Sidebar() {
 
   const { data: pendingRequest } = usePremiumRequestStatus()
   const { mutate: requestPremium, isPending: isRequesting } = useRequestPremium()
+  const openChat = useChatStore((s) => s.setOpen)
 
   const avatarInitial = user?.email ? user.email[0]!.toUpperCase() : '?'
   const avatarColor = user?.email ? getAvatarColor(user.email) : 'bg-slate-600'
@@ -78,27 +80,37 @@ export function Sidebar() {
           )}
         </NavLink>
 
-        {/* AI Chat — locked for non-premium users */}
+        {/* AI Chat */}
+        {user?.isPremium ? (
+          <button
+            type="button"
+            onClick={() => openChat(true)}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+          >
+            <ChatIcon />
+            AI Chat
+            <span className="ml-auto h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+          </button>
+        ) : (
+          <div
+            aria-disabled="true"
+            className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 cursor-not-allowed select-none"
+            title="Premium feature — request access below"
+          >
+            <ChatIcon />
+            AI Chat
+            <span className="ml-auto rounded bg-amber-500/20 px-1.5 py-0.5 text-xs font-semibold text-amber-400">
+              Premium
+            </span>
+          </div>
+        )}
+
         {user?.isAdmin ? (
           <NavLink to="/admin/premium-requests" className={navLinkClass}>
             <ShieldIcon />
             Admin
           </NavLink>
         ) : null}
-
-        <div
-          aria-disabled="true"
-          className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 cursor-not-allowed select-none"
-          title={user?.isPremium ? 'AI Chat' : 'Premium feature — coming in Phase 5'}
-        >
-          <ChatIcon />
-          AI Chat
-          {!user?.isPremium && (
-            <span className="ml-auto rounded bg-amber-500/20 px-1.5 py-0.5 text-xs font-semibold text-amber-400">
-              Premium
-            </span>
-          )}
-        </div>
       </nav>
 
       {/* User section */}

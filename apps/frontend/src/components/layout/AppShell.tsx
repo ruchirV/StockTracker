@@ -3,16 +3,16 @@ import { useEffect } from 'react'
 import { Sidebar } from './Sidebar'
 import { WSStatusDot } from '@/components/WSStatusDot'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
+import { SymbolSearch } from '@/components/search/SymbolSearch'
+import { ChatPanel } from '@/components/chat/ChatPanel'
 import { wsClient } from '@/lib/wsClient'
 import { useNotifications } from '@/hooks/useNotifications'
 
 export function AppShell() {
-  // Connect WebSocket once for all protected pages
   useEffect(() => {
     wsClient.connect()
   }, [])
 
-  // Load notifications on mount to seed the store with server state
   useNotifications()
 
   return (
@@ -21,8 +21,10 @@ export function AppShell() {
 
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Topbar */}
-        <header className="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3 shadow-sm flex-shrink-0">
-          <div />
+        <header className="flex items-center gap-4 border-b border-gray-200 bg-white px-6 py-3 shadow-sm flex-shrink-0">
+          <div className="flex-1">
+            <SymbolSearch />
+          </div>
           <div className="flex items-center gap-3">
             <WSStatusDot />
             <NotificationBell />
@@ -34,6 +36,9 @@ export function AppShell() {
           <Outlet />
         </main>
       </div>
+
+      {/* Chat panel — rendered outside main flow so it overlays all pages */}
+      <ChatPanel />
     </div>
   )
 }

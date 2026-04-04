@@ -56,4 +56,51 @@ describe('EmailService', () => {
       expect.objectContaining({ text: expect.stringContaining('fallen below') as string }),
     )
   })
+
+  // ── Premium email methods ───────────────────────────────────────────────────
+
+  describe('sendPremiumRequestReceived', () => {
+    it('sends email to admin with user email in subject', async () => {
+      await service.sendPremiumRequestReceived('admin@stocktracker.dev', 'alice@example.com')
+      expect(sendMailSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: 'admin@stocktracker.dev',
+          subject: expect.stringContaining('alice@example.com') as string,
+        }),
+      )
+    })
+  })
+
+  describe('sendPremiumApproved', () => {
+    it('sends approval email to user', async () => {
+      await service.sendPremiumApproved('alice@example.com')
+      expect(sendMailSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: 'alice@example.com',
+          subject: expect.stringContaining('approved') as string,
+        }),
+      )
+    })
+  })
+
+  describe('sendPremiumRejected', () => {
+    it('sends rejection email without admin note', async () => {
+      await service.sendPremiumRejected('alice@example.com')
+      expect(sendMailSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: 'alice@example.com',
+          subject: expect.stringContaining('update') as string,
+        }),
+      )
+    })
+
+    it('includes admin note when provided', async () => {
+      await service.sendPremiumRejected('alice@example.com', 'Not eligible at this time')
+      expect(sendMailSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          text: expect.stringContaining('Not eligible at this time') as string,
+        }),
+      )
+    })
+  })
 })
