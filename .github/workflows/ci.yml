@@ -22,8 +22,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build shared packages
-        run: npm run build -w packages/types
 
       - name: Lint
         run: npx turbo run lint
@@ -82,8 +80,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build shared packages
-        run: npm run build -w packages/types
 
       - name: Run Prisma migrations
         run: npx prisma migrate deploy
@@ -107,8 +103,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build shared packages
-        run: npm run build -w packages/types
 
       - name: Run tests
         run: npm run test -w apps/frontend -- --passWithNoTests

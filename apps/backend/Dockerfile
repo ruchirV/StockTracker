@@ -15,9 +15,6 @@ RUN npm ci --workspace=packages/types --workspace=apps/backend
 COPY packages/types/ packages/types/
 COPY apps/backend/ apps/backend/
 
-# Build shared types package first
-RUN npm run build -w packages/types
-
 # Generate Prisma client and compile TypeScript
 RUN npm run -w apps/backend prisma generate
 RUN npm run -w apps/backend build

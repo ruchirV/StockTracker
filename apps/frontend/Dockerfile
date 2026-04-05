@@ -14,9 +14,6 @@ RUN npm ci --workspace=packages/types --workspace=apps/frontend
 COPY packages/types/ packages/types/
 COPY apps/frontend/ apps/frontend/
 
-# Build shared types first
-RUN npm run build -w packages/types
-
 # VITE_API_URL and VITE_WS_URL are injected at build time by CI
 # They differ between staging and production environments
 ARG VITE_API_URL
