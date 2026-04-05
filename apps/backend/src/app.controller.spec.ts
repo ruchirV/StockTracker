@@ -66,10 +66,16 @@ describe('AppController', () => {
     })
 
     it('delegates to AppService', async () => {
-      appService.getHealth.mockResolvedValue({ status: 'ok', db: 'connected', redis: 'connected', uptime: 1 })
+      appService.getHealth.mockResolvedValue({
+        status: 'ok',
+        db: 'connected',
+        redis: 'connected',
+        uptime: 1,
+      })
 
       await appController.getHealth()
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(appService.getHealth).toHaveBeenCalledTimes(1)
     })
   })
