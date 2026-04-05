@@ -9,7 +9,10 @@ describe('AppService', () => {
   let redis: { ping: jest.Mock }
 
   beforeEach(async () => {
-    prisma = { $queryRaw: jest.fn() }
+    // $queryRaw is used as a tagged template literal: prisma.$queryRaw`SELECT 1`
+    // Tagged template calls pass (strings, ...values) as arguments, so mockImplementation
+    // is needed instead of mockResolvedValue to ensure the mock returns a Promise.
+    prisma = { $queryRaw: jest.fn().mockImplementation(() => Promise.resolve([{ '?column?': 1 }])) }
     redis = { ping: jest.fn() }
 
     const module: TestingModule = await Test.createTestingModule({
@@ -25,7 +28,7 @@ describe('AppService', () => {
 
   describe('getHealth', () => {
     it('returns ok when both db and redis are healthy', async () => {
-      prisma.$queryRaw.mockResolvedValue([{ '?column?': 1 }])
+      prisma.$queryRaw.mockImplementation(() => Promise.resolve([{ '?column?': 1 }]))
       redis.ping.mockResolvedValue('PONG')
 
       const result = await service.getHealth()
@@ -37,7 +40,7 @@ describe('AppService', () => {
     })
 
     it('returns degraded when db query throws', async () => {
-      prisma.$queryRaw.mockRejectedValue(new Error('connection refused'))
+      prisma.$queryRaw.mockImplementation(() => Promise.reject(new Error('connection refused')))
       redis.ping.mockResolvedValue('PONG')
 
       const result = await service.getHealth()
@@ -48,7 +51,7 @@ describe('AppService', () => {
     })
 
     it('returns degraded when redis ping throws', async () => {
-      prisma.$queryRaw.mockResolvedValue([{ '?column?': 1 }])
+      prisma.$queryRaw.mockImplementation(() => Promise.resolve([{ '?column?': 1 }]))
       redis.ping.mockRejectedValue(new Error('ECONNREFUSED'))
 
       const result = await service.getHealth()
@@ -59,7 +62,7 @@ describe('AppService', () => {
     })
 
     it('returns degraded when redis returns unexpected value', async () => {
-      prisma.$queryRaw.mockResolvedValue([{ '?column?': 1 }])
+      prisma.$queryRaw.mockImplementation(() => Promise.resolve([{ '?column?': 1 }]))
       redis.ping.mockResolvedValue('unexpected')
 
       const result = await service.getHealth()
@@ -69,7 +72,7 @@ describe('AppService', () => {
     })
 
     it('returns degraded when both db and redis are down', async () => {
-      prisma.$queryRaw.mockRejectedValue(new Error('db down'))
+      prisma.$queryRaw.mockImplementation(() => Promise.reject(new Error('db down')))
       redis.ping.mockRejectedValue(new Error('redis down'))
 
       const result = await service.getHealth()
