@@ -54,9 +54,13 @@ Thumbs.db
 docs/admin-bootstrap.md
 docs/premium-upgrade.md
 
-# Terraform state — contains secrets
+# Terraform/OpenTofu state — contains secrets
 *.tfstate
 *.tfstate.*
 *.tfvars
-!*.tfvars.example
+!infra/envs/*.tfvars
 .terraform/
+
+# Playwright test output
+apps/e2e/test-results/
+apps/e2e/playwright-report/
