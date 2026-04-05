@@ -129,14 +129,11 @@ jobs:
         run: npm ci
 
       - name: Audit dependencies
-        run: |
-          npm audit --audit-level=high \
-            --omit=dev \
-            --ignore-advisories GHSA-r5fr-rjxr-66jc,GHSA-f23m-r3pf-42rh
-        # --omit=dev: skips devDependencies (e.g. picomatch via @nestjs/cli)
-        # --ignore-advisories: lodash in @nestjs/config — the only fix is a
-        #   breaking downgrade to @nestjs/config@1.1.5; the vulnerable
-        #   _.template function is not called by NestJS config
+        # audit-ci wraps npm audit with proper allowlisting support.
+        # Allowlisted advisories are in .audit-ci.json — all are unfixable
+        # without breaking changes (lodash in @nestjs/config, picomatch in
+        # @nestjs/cli devDep). Any new high/critical advisory will still fail.
+        run: npx audit-ci@^7 --config .audit-ci.json
 
   # ── CodeQL SAST ──────────────────────────────────────────────────────────────
   codeql:
