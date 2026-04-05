@@ -1,0 +1,12 @@
+variable "env" { type = string }
+variable "aws_region" { type = string }
+variable "vpc_id" { type = string }
+variable "private_subnet_ids" { type = list(string) }
+variable "alb_security_group_id" { type = string }
+variable "alb_target_group_arn" { type = string }
+variable "ecr_backend_url" { type = string }
+variable "backend_image_tag" { type = string }
+variable "task_cpu" { type = number }
+variable "task_memory" { type = number }
+variable "secrets_arn_prefix" { type = string }
+variable "db_secret_arn" { type = string }
