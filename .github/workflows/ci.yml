@@ -94,6 +94,13 @@ jobs:
       - name: Run tests
         run: npm run test -w apps/backend -- --coverage --passWithNoTests
 
+      - name: Upload backend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: apps/backend/coverage/lcov.info
+          retention-days: 1
+
   # ── Frontend unit tests ──────────────────────────────────────────────────────
   test-frontend:
     name: Frontend Tests
@@ -109,9 +116,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-
       - name: Run tests
-        run: npm run test -w apps/frontend -- --passWithNoTests
+        run: npm run test -w apps/frontend -- --passWithNoTests --coverage
+
+      - name: Upload frontend coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: apps/frontend/coverage/lcov.info
+          retention-days: 1
 
   # ── Dependency audit ─────────────────────────────────────────────────────────
   dependency-audit:
@@ -161,12 +174,25 @@ jobs:
   sonarcloud:
     name: SonarCloud
     runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
     # Only run on PRs and main branch pushes — not every feature branch push
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0   # SonarCloud needs full history for blame data
+
+      - name: Download backend coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-coverage
+          path: apps/backend/coverage
+
+      - name: Download frontend coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-coverage
+          path: apps/frontend/coverage
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@v3
