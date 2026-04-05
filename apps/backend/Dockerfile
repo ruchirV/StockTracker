@@ -16,7 +16,7 @@ COPY packages/types/ packages/types/
 COPY apps/backend/ apps/backend/
 
 # Generate Prisma client and compile TypeScript
-RUN npm run -w apps/backend prisma generate
+RUN cd apps/backend && npx prisma generate
 RUN npm run -w apps/backend build
 
 # Prune to production dependencies only
