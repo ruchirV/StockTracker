@@ -83,6 +83,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate Prisma client
+        run: npx prisma generate
+        working-directory: apps/backend
 
       - name: Run Prisma migrations
         run: npx prisma migrate deploy
