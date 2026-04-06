@@ -4,19 +4,79 @@ import { AppService } from './app.service'
 
 describe('AppController', () => {
   let appController: AppController
+  let appService: jest.Mocked<AppService>
 
   beforeEach(async () => {
+    const mockAppService: jest.Mocked<Partial<AppService>> = {
+      getHealth: jest.fn(),
+    }
+
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
-      providers: [AppService],
+      providers: [{ provide: AppService, useValue: mockAppService }],
     }).compile()
 
     appController = app.get<AppController>(AppController)
+    appService = app.get(AppService)
   })
 
-  describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!')
+  describe('GET /health', () => {
+    it('returns ok status when db and redis are healthy', async () => {
+      appService.getHealth.mockResolvedValue({
+        status: 'ok',
+        db: 'connected',
+        redis: 'connected',
+        uptime: 42,
+      })
+
+      const result = await appController.getHealth()
+
+      expect(result).toEqual({
+        status: 'ok',
+        db: 'connected',
+        redis: 'connected',
+        uptime: 42,
+      })
+    })
+
+    it('returns degraded status when db is down', async () => {
+      appService.getHealth.mockResolvedValue({
+        status: 'degraded',
+        db: 'error',
+        redis: 'connected',
+        uptime: 10,
+      })
+
+      const result = await appController.getHealth()
+
+      expect(result).toMatchObject({ status: 'degraded', db: 'error' })
+    })
+
+    it('returns degraded status when redis is down', async () => {
+      appService.getHealth.mockResolvedValue({
+        status: 'degraded',
+        db: 'connected',
+        redis: 'error',
+        uptime: 10,
+      })
+
+      const result = await appController.getHealth()
+
+      expect(result).toMatchObject({ status: 'degraded', redis: 'error' })
+    })
+
+    it('delegates to AppService', async () => {
+      appService.getHealth.mockResolvedValue({
+        status: 'ok',
+        db: 'connected',
+        redis: 'connected',
+        uptime: 1,
+      })
+
+      await appController.getHealth()
+
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(appService.getHealth).toHaveBeenCalledTimes(1)
     })
   })
 })

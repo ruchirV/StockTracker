@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common'
+import { AppController } from './app.controller'
+import { AppService } from './app.service'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { ThrottlerModule } from '@nestjs/throttler'
 import { BullModule } from '@nestjs/bullmq'
@@ -15,6 +17,8 @@ import { PremiumModule } from './premium/premium.module'
 import { ChatModule } from './chat/chat.module'
 
 @Module({
+  controllers: [AppController],
+  providers: [AppService],
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ThrottlerModule.forRoot({ throttlers: [{ ttl: 60_000, limit: 20 }] }),

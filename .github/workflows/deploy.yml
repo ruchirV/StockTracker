@@ -99,6 +99,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: [docker-push, frontend-staging]
     environment: staging
+    outputs:
+      cluster-name: ${{ steps.tofu-outputs.outputs.cluster_name }}
+      service-name: ${{ steps.tofu-outputs.outputs.service_name }}
+      migrate-task-arn: ${{ steps.tofu-outputs.outputs.migrate_task_arn }}
+      private-subnets: ${{ steps.tofu-outputs.outputs.private_subnets }}
+      ecs-sg-id: ${{ steps.tofu-outputs.outputs.ecs_sg_id }}
     steps:
       - uses: actions/checkout@v4
 
@@ -128,20 +134,34 @@ jobs:
         run: tofu apply -auto-approve -var-file=envs/staging.tfvars
         env:
           TF_VAR_backend_image_tag: ${{ needs.docker-push.outputs.image-tag }}
+          TF_VAR_acm_certificate_arn: ${{ secrets.STAGING_ACM_CERT_ARN }}
+          TF_VAR_cloudfront_certificate_arn: ${{ secrets.STAGING_CF_CERT_ARN }}
+
+      - name: Read OpenTofu outputs
+        id: tofu-outputs
+        working-directory: infra
+        run: |
+          echo "cluster_name=$(tofu output -raw ecs_cluster_name)" >> "$GITHUB_OUTPUT"
+          echo "service_name=$(tofu output -raw ecs_service_name)" >> "$GITHUB_OUTPUT"
+          echo "migrate_task_arn=$(tofu output -raw migrate_task_definition_arn)" >> "$GITHUB_OUTPUT"
+          echo "private_subnets=$(tofu output -raw private_subnet_ids)" >> "$GITHUB_OUTPUT"
+          echo "ecs_sg_id=$(tofu output -raw ecs_security_group_id)" >> "$GITHUB_OUTPUT"
 
       - name: Run DB migrations (ECS one-off task)
         run: |
           TASK_ARN=$(aws ecs run-task \
-            --cluster stocktracker-staging \
-            --task-definition stocktracker-migrate-staging \
+            --cluster ${{ steps.tofu-outputs.outputs.cluster_name }} \
+            --task-definition ${{ steps.tofu-outputs.outputs.migrate_task_arn }} \
             --launch-type FARGATE \
-            --network-configuration "awsvpcConfiguration={subnets=[${{ secrets.STAGING_PRIVATE_SUBNET_IDS }}],securityGroups=[${{ secrets.STAGING_ECS_SG_ID }}]}" \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ steps.tofu-outputs.outputs.private_subnets }}],securityGroups=[${{ steps.tofu-outputs.outputs.ecs_sg_id }}],assignPublicIp=DISABLED}" \
             --query 'tasks[0].taskArn' \
             --output text)
           echo "Waiting for migration task $TASK_ARN..."
-          aws ecs wait tasks-stopped --cluster stocktracker-staging --tasks "$TASK_ARN"
+          aws ecs wait tasks-stopped \
+            --cluster ${{ steps.tofu-outputs.outputs.cluster_name }} \
+            --tasks "$TASK_ARN"
           EXIT_CODE=$(aws ecs describe-tasks \
-            --cluster stocktracker-staging \
+            --cluster ${{ steps.tofu-outputs.outputs.cluster_name }} \
             --tasks "$TASK_ARN" \
             --query 'tasks[0].containers[0].exitCode' \
             --output text)
@@ -151,15 +171,16 @@ jobs:
       - name: Force ECS service redeploy
         run: |
           aws ecs update-service \
-            --cluster stocktracker-staging \
-            --service stocktracker-backend \
+            --cluster ${{ steps.tofu-outputs.outputs.cluster_name }} \
+            --service ${{ steps.tofu-outputs.outputs.service_name }} \
+            --task-definition $ECR_BACKEND_REPO:${{ needs.docker-push.outputs.image-tag }} \
             --force-new-deployment
 
       - name: Wait for ECS service stability
         run: |
           aws ecs wait services-stable \
-            --cluster stocktracker-staging \
-            --services stocktracker-backend
+            --cluster ${{ steps.tofu-outputs.outputs.cluster_name }} \
+            --services ${{ steps.tofu-outputs.outputs.service_name }}
 
       - name: Smoke test staging
         run: |
@@ -184,19 +205,27 @@ jobs:
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
+        working-directory: apps/e2e
 
       - name: Run E2E tests
         run: npx playwright test --project=chromium
+        working-directory: apps/e2e
         env:
           PLAYWRIGHT_BASE_URL: ${{ secrets.STAGING_FRONTEND_URL }}
           API_URL: ${{ secrets.STAGING_API_URL }}
+          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+          E2E_PREMIUM_EMAIL: ${{ secrets.E2E_PREMIUM_EMAIL }}
+          E2E_PREMIUM_PASSWORD: ${{ secrets.E2E_PREMIUM_PASSWORD }}
+          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
 
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: playwright-report/
+          path: apps/e2e/playwright-report/
           retention-days: 7
 
   # ── Deploy to production (manual approval gate) ──────────────────────────────
@@ -251,19 +280,33 @@ jobs:
         run: tofu apply -auto-approve -var-file=envs/prod.tfvars
         env:
           TF_VAR_backend_image_tag: ${{ needs.docker-push.outputs.image-tag }}
+          TF_VAR_acm_certificate_arn: ${{ secrets.PROD_ACM_CERT_ARN }}
+          TF_VAR_cloudfront_certificate_arn: ${{ secrets.PROD_CF_CERT_ARN }}
+
+      - name: Read OpenTofu outputs
+        id: tofu-outputs
+        working-directory: infra
+        run: |
+          echo "cluster_name=$(tofu output -raw ecs_cluster_name)" >> "$GITHUB_OUTPUT"
+          echo "service_name=$(tofu output -raw ecs_service_name)" >> "$GITHUB_OUTPUT"
+          echo "migrate_task_arn=$(tofu output -raw migrate_task_definition_arn)" >> "$GITHUB_OUTPUT"
+          echo "private_subnets=$(tofu output -raw private_subnet_ids)" >> "$GITHUB_OUTPUT"
+          echo "ecs_sg_id=$(tofu output -raw ecs_security_group_id)" >> "$GITHUB_OUTPUT"
 
       - name: Run DB migrations (production)
         run: |
           TASK_ARN=$(aws ecs run-task \
-            --cluster stocktracker-prod \
-            --task-definition stocktracker-migrate-prod \
+            --cluster ${{ steps.tofu-outputs.outputs.cluster_name }} \
+            --task-definition ${{ steps.tofu-outputs.outputs.migrate_task_arn }} \
             --launch-type FARGATE \
-            --network-configuration "awsvpcConfiguration={subnets=[${{ secrets.PROD_PRIVATE_SUBNET_IDS }}],securityGroups=[${{ secrets.PROD_ECS_SG_ID }}]}" \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ steps.tofu-outputs.outputs.private_subnets }}],securityGroups=[${{ steps.tofu-outputs.outputs.ecs_sg_id }}],assignPublicIp=DISABLED}" \
             --query 'tasks[0].taskArn' \
             --output text)
-          aws ecs wait tasks-stopped --cluster stocktracker-prod --tasks "$TASK_ARN"
+          aws ecs wait tasks-stopped \
+            --cluster ${{ steps.tofu-outputs.outputs.cluster_name }} \
+            --tasks "$TASK_ARN"
           EXIT_CODE=$(aws ecs describe-tasks \
-            --cluster stocktracker-prod \
+            --cluster ${{ steps.tofu-outputs.outputs.cluster_name }} \
             --tasks "$TASK_ARN" \
             --query 'tasks[0].containers[0].exitCode' \
             --output text)
@@ -272,15 +315,15 @@ jobs:
       - name: Force ECS service redeploy
         run: |
           aws ecs update-service \
-            --cluster stocktracker-prod \
-            --service stocktracker-backend \
+            --cluster ${{ steps.tofu-outputs.outputs.cluster_name }} \
+            --service ${{ steps.tofu-outputs.outputs.service_name }} \
             --force-new-deployment
 
       - name: Wait for ECS service stability
         run: |
           aws ecs wait services-stable \
-            --cluster stocktracker-prod \
-            --services stocktracker-backend
+            --cluster ${{ steps.tofu-outputs.outputs.cluster_name }} \
+            --services ${{ steps.tofu-outputs.outputs.service_name }}
 
       - name: Smoke test production
         run: |
