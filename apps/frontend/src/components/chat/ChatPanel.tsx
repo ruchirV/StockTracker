@@ -101,13 +101,13 @@ export function ChatPanel() {
       />
 
       {/* Panel */}
-      <div className="fixed right-0 top-0 z-40 flex h-screen w-96 flex-col bg-white shadow-2xl border-l border-slate-200">
+      <div role="dialog" aria-label="AI Chat" className="fixed right-0 top-0 z-40 flex h-screen w-96 flex-col bg-white shadow-2xl border-l border-slate-200">
         {/* Header */}
         <div className="flex items-center gap-3 border-b border-slate-200 px-4 py-3 flex-shrink-0">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-slate-800">AI Chat</span>
-              <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600">
+              <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
                 Premium
               </span>
             </div>
@@ -157,7 +157,7 @@ export function ChatPanel() {
               </div>
               <div>
                 <p className="text-sm font-medium text-slate-700">Ask about {selectedSymbol}</p>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Context-aware answers grounded in your watchlist and live prices
                 </p>
               </div>
@@ -212,7 +212,7 @@ export function ChatPanel() {
               <SendIcon />
             </button>
           </div>
-          <p className="mt-1.5 text-[10px] text-slate-400">Shift+Enter for newline</p>
+          <p className="mt-1.5 text-[10px] text-slate-500">Shift+Enter for newline</p>
         </div>
       </div>
     </>

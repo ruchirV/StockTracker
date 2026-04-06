@@ -110,7 +110,7 @@ export function LoginPage() {
         {/* Divider */}
         <div className="flex items-center gap-3">
           <div className="h-px flex-1 bg-gray-200" />
-          <span className="text-xs text-gray-400">or continue with</span>
+          <span className="text-xs text-gray-500">or continue with</span>
           <div className="h-px flex-1 bg-gray-200" />
         </div>
 

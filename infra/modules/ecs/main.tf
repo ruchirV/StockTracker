@@ -1,5 +1,18 @@
 data "aws_caller_identity" "current" {}
 
+# Look up the actual ARNs (with AWS-generated suffix) for all Secrets Manager secrets
+data "aws_secretsmanager_secret" "jwt_access"       { name = "stocktracker/${var.env}/jwt-access-secret" }
+data "aws_secretsmanager_secret" "jwt_refresh"      { name = "stocktracker/${var.env}/jwt-refresh-secret" }
+data "aws_secretsmanager_secret" "google_client_id" { name = "stocktracker/${var.env}/google-client-id" }
+data "aws_secretsmanager_secret" "google_client_secret" { name = "stocktracker/${var.env}/google-client-secret" }
+data "aws_secretsmanager_secret" "github_client_id" { name = "stocktracker/${var.env}/github-client-id" }
+data "aws_secretsmanager_secret" "github_client_secret" { name = "stocktracker/${var.env}/github-client-secret" }
+data "aws_secretsmanager_secret" "finnhub_api_key"  { name = "stocktracker/${var.env}/finnhub-api-key" }
+data "aws_secretsmanager_secret" "groq_api_key"     { name = "stocktracker/${var.env}/groq-api-key" }
+data "aws_secretsmanager_secret" "smtp_host"        { name = "stocktracker/${var.env}/smtp-host" }
+data "aws_secretsmanager_secret" "smtp_user"        { name = "stocktracker/${var.env}/smtp-user" }
+data "aws_secretsmanager_secret" "smtp_pass"        { name = "stocktracker/${var.env}/smtp-pass" }
+
 # ── Security group for ECS tasks ──────────────────────────────────────────────
 resource "aws_security_group" "ecs" {
   name        = "stocktracker-${var.env}-ecs"
@@ -135,21 +148,23 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "PORT",                   value = "3001" },
       { name = "LLM_PROVIDER",           value = "groq" },
       { name = "FRONTEND_URL",           value = "https://${var.env == "prod" ? "stocktracker.dev" : "staging.stocktracker.dev"}" },
+      { name = "REDIS_URL",              value = "redis://${var.redis_url}" },
+      { name = "BULLMQ_REDIS_URL",       value = "redis://${var.redis_url}" },
     ]
 
     secrets = [
       { name = "DATABASE_URL",           valueFrom = var.db_secret_arn },
-      { name = "JWT_ACCESS_SECRET",      valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:stocktracker/${var.env}/jwt-access-secret" },
-      { name = "JWT_REFRESH_SECRET",     valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:stocktracker/${var.env}/jwt-refresh-secret" },
-      { name = "GOOGLE_CLIENT_ID",       valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:stocktracker/${var.env}/google-client-id" },
-      { name = "GOOGLE_CLIENT_SECRET",   valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:stocktracker/${var.env}/google-client-secret" },
-      { name = "GITHUB_CLIENT_ID",       valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:stocktracker/${var.env}/github-client-id" },
-      { name = "GITHUB_CLIENT_SECRET",   valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:stocktracker/${var.env}/github-client-secret" },
-      { name = "FINNHUB_API_KEY",        valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:stocktracker/${var.env}/finnhub-api-key" },
-      { name = "GROQ_API_KEY",           valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:stocktracker/${var.env}/groq-api-key" },
-      { name = "SMTP_HOST",              valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:stocktracker/${var.env}/smtp-host" },
-      { name = "SMTP_USER",              valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:stocktracker/${var.env}/smtp-user" },
-      { name = "SMTP_PASS",              valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:stocktracker/${var.env}/smtp-pass" },
+      { name = "JWT_ACCESS_SECRET",      valueFrom = data.aws_secretsmanager_secret.jwt_access.arn },
+      { name = "JWT_REFRESH_SECRET",     valueFrom = data.aws_secretsmanager_secret.jwt_refresh.arn },
+      { name = "GOOGLE_CLIENT_ID",       valueFrom = data.aws_secretsmanager_secret.google_client_id.arn },
+      { name = "GOOGLE_CLIENT_SECRET",   valueFrom = data.aws_secretsmanager_secret.google_client_secret.arn },
+      { name = "GITHUB_CLIENT_ID",       valueFrom = data.aws_secretsmanager_secret.github_client_id.arn },
+      { name = "GITHUB_CLIENT_SECRET",   valueFrom = data.aws_secretsmanager_secret.github_client_secret.arn },
+      { name = "FINNHUB_API_KEY",        valueFrom = data.aws_secretsmanager_secret.finnhub_api_key.arn },
+      { name = "GROQ_API_KEY",           valueFrom = data.aws_secretsmanager_secret.groq_api_key.arn },
+      { name = "SMTP_HOST",              valueFrom = data.aws_secretsmanager_secret.smtp_host.arn },
+      { name = "SMTP_USER",              valueFrom = data.aws_secretsmanager_secret.smtp_user.arn },
+      { name = "SMTP_PASS",              valueFrom = data.aws_secretsmanager_secret.smtp_pass.arn },
     ]
 
     logConfiguration = {
@@ -232,11 +247,6 @@ resource "aws_ecs_service" "backend" {
 
   deployment_minimum_healthy_percent = 50
   deployment_maximum_percent         = 200
-
-  lifecycle {
-    # Prevent redeployment on every tofu apply — image updates handled by CI
-    ignore_changes = [task_definition]
-  }
 
   tags = { Env = var.env }
 }

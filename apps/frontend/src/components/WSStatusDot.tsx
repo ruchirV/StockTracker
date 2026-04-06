@@ -4,7 +4,7 @@ export function WSStatusDot() {
   const connected = usePriceStore((s) => s.finnhubConnected)
 
   return (
-    <div className="flex items-center gap-1.5" aria-label={connected ? 'Live data connected' : 'Reconnecting…'}>
+    <div role="status" className="flex items-center gap-1.5" aria-label={connected ? 'Live data connected' : 'Reconnecting…'}>
       <span
         aria-hidden="true"
         className={`inline-block h-2 w-2 rounded-full ${connected ? 'bg-green-500' : 'animate-pulse bg-red-500'}`}

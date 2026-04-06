@@ -38,7 +38,7 @@ export function WatchlistPanel() {
         <div className="border-b border-gray-100 px-4 py-3">
           <h2 className="text-base font-semibold text-gray-900">Watchlist</h2>
         </div>
-        <div className="flex items-center justify-center py-16 text-sm text-gray-400">Loading…</div>
+        <div className="flex items-center justify-center py-16 text-sm text-gray-500">Loading…</div>
       </div>
     )
   }
@@ -54,9 +54,9 @@ export function WatchlistPanel() {
       {/* Column headers */}
       {items.length > 0 && (
         <div className="flex items-center gap-4 border-b border-gray-100 bg-gray-50 px-4 py-1.5">
-          <span className="w-20 flex-shrink-0 text-xs font-medium uppercase tracking-wide text-gray-400">Symbol</span>
-          <span className="flex-1 text-xs font-medium uppercase tracking-wide text-gray-400">Company</span>
-          <span className="w-28 flex-shrink-0 text-right text-xs font-medium uppercase tracking-wide text-gray-400">Price / Chg%</span>
+          <span className="w-20 flex-shrink-0 text-xs font-medium uppercase tracking-wide text-gray-500">Symbol</span>
+          <span className="flex-1 text-xs font-medium uppercase tracking-wide text-gray-500">Company</span>
+          <span className="w-28 flex-shrink-0 text-right text-xs font-medium uppercase tracking-wide text-gray-500">Price / Chg%</span>
           <span className="w-8 flex-shrink-0" aria-hidden="true" />
         </div>
       )}
@@ -157,7 +157,7 @@ function EmptyState() {
         />
       </svg>
       <p className="text-sm text-gray-500">Your watchlist is empty.</p>
-      <p className="text-xs text-gray-400">Add a stock symbol above to get started.</p>
+      <p className="text-xs text-gray-500">Add a stock symbol above to get started.</p>
     </div>
   )
 }

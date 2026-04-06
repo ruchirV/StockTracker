@@ -124,7 +124,7 @@ export function Sidebar() {
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-xs font-medium text-white">{user?.email}</p>
-            <p className={`text-xs ${user?.isPremium ? 'text-amber-400 font-semibold' : 'text-slate-500'}`}>
+            <p className={`text-xs ${user?.isPremium ? 'text-amber-400 font-semibold' : 'text-slate-400'}`}>
               {user?.isAdmin ? 'Admin' : user?.isPremium ? 'Premium' : 'Free plan'}
             </p>
           </div>
@@ -133,7 +133,7 @@ export function Sidebar() {
         {/* Premium request button — only for free users without a pending request */}
         {!user?.isPremium && !user?.isAdmin && (
           hasPendingRequest ? (
-            <div className="mx-2 flex items-center gap-2 rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-500">
+            <div className="mx-2 flex items-center gap-2 rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-400">
               <SpinnerIcon />
               Request pending…
             </div>
@@ -184,7 +184,7 @@ export function Sidebar() {
             logout()
             navigate('/login')
           }}
-          className="w-full rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-500 hover:bg-slate-800 hover:text-white transition-colors"
+          className="w-full rounded-lg px-3 py-2 text-left text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
         >
           Sign out
         </button>

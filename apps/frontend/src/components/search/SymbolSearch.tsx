@@ -87,6 +87,7 @@ export function SymbolSearch() {
           onChange={(e) => setQuery(e.target.value.toUpperCase())}
           onKeyDown={handleKeyDown}
           onFocus={() => results.length > 0 && setIsOpen(true)}
+          role="combobox"
           placeholder="Search stocks…"
           aria-label="Search stocks"
           aria-autocomplete="list"

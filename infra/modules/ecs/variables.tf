@@ -10,3 +10,4 @@ variable "task_cpu" { type = number }
 variable "task_memory" { type = number }
 variable "secrets_arn_prefix" { type = string }
 variable "db_secret_arn" { type = string }
+variable "redis_url" { type = string }

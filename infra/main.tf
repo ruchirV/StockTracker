@@ -93,6 +93,7 @@ module "ecs" {
   task_memory           = var.ecs_task_memory
   secrets_arn_prefix    = module.secrets.secrets_arn_prefix
   db_secret_arn         = module.rds.database_url_secret_arn
+  redis_url             = module.elasticache.redis_endpoint
 }
 
 # ── CloudFront + S3 (frontend) ────────────────────────────────────────────────
