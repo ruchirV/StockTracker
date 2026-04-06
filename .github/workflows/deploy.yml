@@ -231,7 +231,7 @@ jobs:
   deploy-production:
     name: Deploy Production
     runs-on: ubuntu-latest
-    needs: e2e-staging
+    needs: deploy-staging
     environment: production    # GitHub requires manual approval for this environment
     steps:
       - uses: actions/checkout@v4
