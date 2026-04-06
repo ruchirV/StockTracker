@@ -58,7 +58,7 @@ export function WatchlistRow({ item, isExpanded, onToggle }: Props) {
     prevPriceRef.current = priceValue
   }, [priceValue])
 
-  const changeColor = price && price.change >= 0 ? 'text-green-600' : 'text-red-600'
+  const changeColor = price && price.change >= 0 ? 'text-green-700' : 'text-red-600'
   const flashClass =
     flash === 'up'
       ? 'bg-green-100 transition-colors duration-800'
@@ -70,53 +70,55 @@ export function WatchlistRow({ item, isExpanded, onToggle }: Props) {
   const companyName = COMPANY_NAMES[item.symbol] ?? '—'
 
   return (
-    <div
-      className={`flex items-center gap-4 rounded-none px-4 py-3 cursor-pointer hover:bg-gray-50 ${flashClass} ${expandedBorder}`}
-      onClick={onToggle}
-      role="button"
-      tabIndex={0}
-      aria-expanded={isExpanded}
-      aria-label={`${item.symbol} — click to ${isExpanded ? 'close' : 'open'} chart`}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle() } }}
-    >
-      {/* Symbol + chevron */}
-      <div className="flex w-20 flex-shrink-0 items-center gap-1.5">
-        <span className="font-semibold text-gray-900">{item.symbol}</span>
-        <svg
-          className={`h-3 w-3 flex-shrink-0 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2.5}
-          aria-hidden="true"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
-      </div>
-
-      {/* Company name */}
-      <span className="flex-1 truncate text-sm text-gray-500">{companyName}</span>
-
-      {/* Price + change — right-aligned tabular */}
-      <div className="flex w-28 flex-shrink-0 flex-col items-end tabular-nums" onClick={(e) => e.stopPropagation()}>
-        {price ? (
-          <>
-            <span className="text-sm font-medium text-gray-900">${price.price.toFixed(2)}</span>
-            <span className={`text-xs ${changeColor}`}>
-              {price.changePercent >= 0 ? '+' : ''}{price.changePercent.toFixed(2)}%
-            </span>
-          </>
-        ) : (
-          <span className="text-sm text-gray-400">—</span>
-        )}
-      </div>
-
-      {/* Remove */}
+    <div className={`flex items-center rounded-none ${flashClass} ${expandedBorder}`}>
+      {/* Clickable row area */}
       <button
-        onClick={(e) => { e.stopPropagation(); remove(item.id) }}
+        type="button"
+        onClick={onToggle}
+        aria-expanded={isExpanded}
+        aria-label={`${item.symbol} — click to ${isExpanded ? 'close' : 'open'} chart`}
+        className="flex flex-1 items-center gap-4 px-4 py-3 cursor-pointer hover:bg-gray-50 text-left"
+      >
+        {/* Symbol + chevron */}
+        <div className="flex w-20 flex-shrink-0 items-center gap-1.5">
+          <span className="font-semibold text-gray-900">{item.symbol}</span>
+          <svg
+            className={`h-3 w-3 flex-shrink-0 text-gray-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2.5}
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+
+        {/* Company name */}
+        <span className="flex-1 truncate text-sm text-gray-500">{companyName}</span>
+
+        {/* Price + change — right-aligned tabular */}
+        <div className="flex w-28 flex-shrink-0 flex-col items-end tabular-nums">
+          {price ? (
+            <>
+              <span className="text-sm font-medium text-gray-900">${price.price.toFixed(2)}</span>
+              <span className={`text-xs ${changeColor}`}>
+                {price.changePercent >= 0 ? '+' : ''}{price.changePercent.toFixed(2)}%
+              </span>
+            </>
+          ) : (
+            <span className="text-sm text-gray-400">—</span>
+          )}
+        </div>
+      </button>
+
+      {/* Remove — sibling of the row button, not nested inside it */}
+      <button
+        type="button"
+        onClick={() => remove(item.id)}
         disabled={isPending}
         aria-label={`Remove ${item.symbol} from watchlist`}
-        className="w-8 flex-shrink-0 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-400 disabled:opacity-50"
+        className="mr-4 w-8 flex-shrink-0 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-red-400 disabled:opacity-50"
       >
         <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
           <path

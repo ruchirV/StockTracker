@@ -5,7 +5,7 @@ const test = base
 test.describe('Admin', () => {
   test('admin approves premium request → user sees AI Chat enabled', async ({ page }) => {
     const adminEmail = process.env['E2E_ADMIN_EMAIL'] ?? 'admin@stocktracker.dev'
-    const adminPassword = process.env['E2E_ADMIN_PASSWORD'] ?? 'AdminPassword123!'
+    const adminPassword = process.env['E2E_ADMIN_PASSWORD'] ?? 'AdminPassword123$'
 
     // Login as admin
     await page.goto('/login')
@@ -14,9 +14,9 @@ test.describe('Admin', () => {
     await page.getByRole('button', { name: /log in|sign in/i }).click()
     await expect(page).toHaveURL(/dashboard|admin/, { timeout: 10_000 })
 
-    // Navigate to admin panel
-    await page.goto('/admin')
-    await expect(page.getByRole('heading', { name: /admin/i })).toBeVisible()
+    // Navigate to admin panel via sidebar link (avoids hard reload that resets auth state)
+    await page.getByRole('link', { name: /admin/i }).click()
+    await expect(page.getByRole('heading', { name: /premium requests/i })).toBeVisible()
 
     // Find a pending premium request and approve it
     const pendingRow = page.getByRole('row').filter({ hasText: /pending/i }).first()

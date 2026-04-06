@@ -3,25 +3,38 @@ import AxeBuilder from '@axe-core/playwright'
 
 test.describe('AI Chat (premium)', () => {
   test('premium user can send message and get streaming response', async ({ premiumPage: page }) => {
-    await page.goto('/dashboard')
+    // Add a stock first so selectedSymbol is populated (chat requires a watchlist item)
+    await page.getByLabel('Stock symbol').fill('AAPL')
+    await page.getByRole('button', { name: /add/i }).click()
+    await expect(page.getByText('AAPL').first()).toBeVisible({ timeout: 5_000 })
 
-    // Open chat panel
-    await page.getByRole('button', { name: /chat|ai|assistant/i }).click()
-    await expect(page.getByRole('dialog').or(page.getByTestId('chat-panel'))).toBeVisible()
+    // Open chat panel via sidebar button (SPA nav — no reload)
+    await page.getByRole('button', { name: /ai chat/i }).click()
 
-    // Type a message
-    const chatInput = page.getByPlaceholder(/ask|message|type/i)
+    // Panel renders as a fixed div (not a dialog)
+    const panel = page.locator('div[role="dialog"]')
+    await expect(panel).toBeVisible()
+
+    // Wait for symbol to be selected (auto-selects first watchlist item)
+    await expect(page.locator('select[aria-label="Select symbol"]')).toBeVisible({ timeout: 5_000 })
+
+    // Type a message and send
+    const chatInput = page.getByPlaceholder(/ask about your portfolio/i)
     await chatInput.fill('What is the current price of AAPL?')
-    await page.getByRole('button', { name: /send/i }).click()
+    await page.locator('button[aria-label="Send"]').click()
 
-    // Response should appear (streaming may take a few seconds)
-    await expect(page.getByRole('article').or(page.locator('[data-testid="chat-message"]')).last())
+    // User bubble appears immediately, then response follows
+    await expect(panel.locator('div.rounded-2xl').first())
+      .toContainText('What is the current price of AAPL?', { timeout: 5_000 })
+
+    // Response bubble should appear
+    await expect(panel.locator('div.rounded-2xl').last())
       .toContainText(/\w+/, { timeout: 15_000 })
   })
 
   test('chat panel has no accessibility violations', async ({ premiumPage: page }) => {
-    await page.goto('/dashboard')
-    await page.getByRole('button', { name: /chat|ai|assistant/i }).click()
+    await page.getByRole('button', { name: /ai chat/i }).click()
+    await expect(page.locator('div[role="dialog"]')).toBeVisible()
     const results = await new AxeBuilder({ page }).analyze()
     expect(results.violations).toEqual([])
   })

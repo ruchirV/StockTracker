@@ -11,7 +11,8 @@ test.describe('Authentication', () => {
     await page.goto('/register')
     await page.getByLabel(/email/i).fill(email)
     await page.getByLabel(/^password$/i).fill(password)
-    await page.getByRole('button', { name: /register|sign up/i }).click()
+    await page.getByLabel(/^confirm password/i).fill(password)
+    await page.getByRole('button', { name: /create account|register|sign up/i }).click()
 
     // Should land on dashboard or login after registration
     await expect(page).toHaveURL(/dashboard|login/, { timeout: 10_000 })
