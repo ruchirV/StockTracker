@@ -69,7 +69,7 @@ describe('ChatPanel', () => {
     vi.mocked(useWatchlistHook.useWatchlist).mockReturnValue({
       data: [],
       isLoading: false,
-    } as any as ReturnType<typeof useWatchlistHook.useWatchlist>)
+    } as unknown as ReturnType<typeof useWatchlistHook.useWatchlist>)
     openChatWithSymbol()
     render(<ChatPanel />)
     expect(screen.queryByRole('combobox', { name: 'Select symbol' })).not.toBeInTheDocument()
@@ -160,7 +160,7 @@ describe('ChatPanel', () => {
     vi.mocked(useWatchlistHook.useWatchlist).mockReturnValue({
       data: [],
       isLoading: false,
-    } as any as ReturnType<typeof useWatchlistHook.useWatchlist>)
+    } as unknown as ReturnType<typeof useWatchlistHook.useWatchlist>)
     useChatStore.setState({ isOpen: true, selectedSymbol: '' })
     render(<ChatPanel />)
     const textarea = screen.getByPlaceholderText(/ask about your portfolio/i)

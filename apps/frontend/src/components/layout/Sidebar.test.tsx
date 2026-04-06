@@ -35,9 +35,9 @@ beforeEach(() => {
   useNotificationStore.setState({ unreadCount: 0, notifications: [] })
   useChatStore.setState({ isOpen: false })
 
-  vi.mocked(useAuthHook.useLogout).mockReturnValue({ mutate: mockLogout } as any as ReturnType<typeof useAuthHook.useLogout>)
+  vi.mocked(useAuthHook.useLogout).mockReturnValue({ mutate: mockLogout } as unknown as ReturnType<typeof useAuthHook.useLogout>)
   vi.mocked(usePremiumHook.usePremiumRequestStatus).mockReturnValue({ data: null } as ReturnType<typeof usePremiumHook.usePremiumRequestStatus>)
-  vi.mocked(usePremiumHook.useRequestPremium).mockReturnValue({ mutate: mockRequestPremium, isPending: false } as any as ReturnType<typeof usePremiumHook.useRequestPremium>)
+  vi.mocked(usePremiumHook.useRequestPremium).mockReturnValue({ mutate: mockRequestPremium, isPending: false } as unknown as ReturnType<typeof usePremiumHook.useRequestPremium>)
 })
 
 describe('Sidebar', () => {
@@ -195,7 +195,7 @@ describe('Sidebar', () => {
       vi.mocked(usePremiumHook.useRequestPremium).mockReturnValue({
         mutate: mockRequestPremium,
         isPending: true,
-      } as any as ReturnType<typeof usePremiumHook.useRequestPremium>)
+      } as unknown as ReturnType<typeof usePremiumHook.useRequestPremium>)
       renderSidebar()
       fireEvent.click(screen.getByRole('button', { name: /request premium access/i }))
       expect(screen.getByRole('button', { name: /confirm/i })).toBeDisabled()
