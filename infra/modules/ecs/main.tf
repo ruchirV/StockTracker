@@ -74,7 +74,6 @@ resource "aws_iam_role_policy" "secrets_read" {
         Action = ["secretsmanager:GetSecretValue"]
         Resource = [
           "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:stocktracker/${var.env}/*",
-          var.db_secret_arn,
         ]
       }
     ]
@@ -139,7 +138,7 @@ resource "aws_ecs_task_definition" "backend" {
     ]
 
     secrets = [
-      { name = "DATABASE_URL",           valueFrom = "${var.db_secret_arn}::::" },
+      { name = "DATABASE_URL",           valueFrom = var.db_secret_arn },
       { name = "JWT_ACCESS_SECRET",      valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:stocktracker/${var.env}/jwt-access-secret" },
       { name = "JWT_REFRESH_SECRET",     valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:stocktracker/${var.env}/jwt-refresh-secret" },
       { name = "GOOGLE_CLIENT_ID",       valueFrom = "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:stocktracker/${var.env}/google-client-id" },

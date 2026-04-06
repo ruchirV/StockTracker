@@ -17,6 +17,21 @@ resource "aws_secretsmanager_secret_version" "db_password" {
   secret_string = random_password.db_password.result
 }
 
+# Full DATABASE_URL secret — injected directly into ECS task as DATABASE_URL env var
+resource "aws_secretsmanager_secret" "database_url" {
+  name                    = "stocktracker/${var.env}/database-url"
+  recovery_window_in_days = 0
+  tags = { Env = var.env }
+}
+
+resource "aws_secretsmanager_secret_version" "database_url" {
+  secret_id     = aws_secretsmanager_secret.database_url.id
+  secret_string = "postgresql://${var.db_username}:${random_password.db_password.result}@${aws_db_instance.main.endpoint}/${var.db_name}"
+
+  # Depend on the DB being created first so the endpoint is available
+  depends_on = [aws_db_instance.main]
+}
+
 resource "aws_db_subnet_group" "main" {
   name       = "stocktracker-${var.env}"
   subnet_ids = var.private_subnet_ids
