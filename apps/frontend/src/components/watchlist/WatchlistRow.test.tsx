@@ -42,7 +42,7 @@ beforeEach(() => {
   vi.mocked(useWatchlistHook.useRemoveFromWatchlist).mockReturnValue({
     mutate: mockRemove,
     isPending: false,
-  } as ReturnType<typeof useWatchlistHook.useRemoveFromWatchlist>)
+  } as any as ReturnType<typeof useWatchlistHook.useRemoveFromWatchlist>)
 })
 
 describe('WatchlistRow', () => {
@@ -140,7 +140,7 @@ describe('WatchlistRow', () => {
       vi.mocked(useWatchlistHook.useRemoveFromWatchlist).mockReturnValue({
         mutate: mockRemove,
         isPending: true,
-      } as ReturnType<typeof useWatchlistHook.useRemoveFromWatchlist>)
+      } as any as ReturnType<typeof useWatchlistHook.useRemoveFromWatchlist>)
       renderRow()
       expect(screen.getByRole('button', { name: 'Remove AAPL from watchlist' })).toBeDisabled()
     })

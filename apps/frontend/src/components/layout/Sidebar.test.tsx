@@ -31,13 +31,13 @@ function renderSidebar() {
 beforeEach(() => {
   vi.clearAllMocks()
 
-  useAuthStore.setState({ user: { id: '1', email: 'user@test.com', isAdmin: false, isPremium: false }, isAuthenticated: true, accessToken: 'tok' })
+  useAuthStore.setState({ user: { id: '1', email: 'user@test.com', isAdmin: false, isPremium: false, provider: null }, isAuthenticated: true, accessToken: 'tok' })
   useNotificationStore.setState({ unreadCount: 0, notifications: [] })
   useChatStore.setState({ isOpen: false })
 
-  vi.mocked(useAuthHook.useLogout).mockReturnValue({ mutate: mockLogout } as ReturnType<typeof useAuthHook.useLogout>)
+  vi.mocked(useAuthHook.useLogout).mockReturnValue({ mutate: mockLogout } as any as ReturnType<typeof useAuthHook.useLogout>)
   vi.mocked(usePremiumHook.usePremiumRequestStatus).mockReturnValue({ data: null } as ReturnType<typeof usePremiumHook.usePremiumRequestStatus>)
-  vi.mocked(usePremiumHook.useRequestPremium).mockReturnValue({ mutate: mockRequestPremium, isPending: false } as ReturnType<typeof usePremiumHook.useRequestPremium>)
+  vi.mocked(usePremiumHook.useRequestPremium).mockReturnValue({ mutate: mockRequestPremium, isPending: false } as any as ReturnType<typeof usePremiumHook.useRequestPremium>)
 })
 
 describe('Sidebar', () => {
@@ -59,7 +59,7 @@ describe('Sidebar', () => {
     })
 
     it('renders Admin link for admin user', () => {
-      useAuthStore.setState({ user: { id: '1', email: 'admin@test.com', isAdmin: true, isPremium: false }, isAuthenticated: true, accessToken: 'tok' })
+      useAuthStore.setState({ user: { id: '1', email: 'admin@test.com', isAdmin: true, isPremium: false, provider: null }, isAuthenticated: true, accessToken: 'tok' })
       renderSidebar()
       expect(screen.getByRole('link', { name: /admin/i })).toBeInTheDocument()
     })
@@ -93,13 +93,13 @@ describe('Sidebar', () => {
     })
 
     it('shows AI Chat button for premium user', () => {
-      useAuthStore.setState({ user: { id: '1', email: 'user@test.com', isAdmin: false, isPremium: true }, isAuthenticated: true, accessToken: 'tok' })
+      useAuthStore.setState({ user: { id: '1', email: 'user@test.com', isAdmin: false, isPremium: true, provider: null }, isAuthenticated: true, accessToken: 'tok' })
       renderSidebar()
       expect(screen.getByRole('button', { name: /ai chat/i })).toBeInTheDocument()
     })
 
     it('opens chat panel when AI Chat button clicked', () => {
-      useAuthStore.setState({ user: { id: '1', email: 'user@test.com', isAdmin: false, isPremium: true }, isAuthenticated: true, accessToken: 'tok' })
+      useAuthStore.setState({ user: { id: '1', email: 'user@test.com', isAdmin: false, isPremium: true, provider: null }, isAuthenticated: true, accessToken: 'tok' })
       renderSidebar()
       fireEvent.click(screen.getByRole('button', { name: /ai chat/i }))
       expect(useChatStore.getState().isOpen).toBe(true)
@@ -118,13 +118,13 @@ describe('Sidebar', () => {
     })
 
     it('shows Premium label for premium user', () => {
-      useAuthStore.setState({ user: { id: '1', email: 'user@test.com', isAdmin: false, isPremium: true }, isAuthenticated: true, accessToken: 'tok' })
+      useAuthStore.setState({ user: { id: '1', email: 'user@test.com', isAdmin: false, isPremium: true, provider: null }, isAuthenticated: true, accessToken: 'tok' })
       renderSidebar()
       expect(screen.getByText('Premium')).toBeInTheDocument()
     })
 
     it('shows Admin label for admin user', () => {
-      useAuthStore.setState({ user: { id: '1', email: 'admin@test.com', isAdmin: true, isPremium: false }, isAuthenticated: true, accessToken: 'tok' })
+      useAuthStore.setState({ user: { id: '1', email: 'admin@test.com', isAdmin: true, isPremium: false, provider: null }, isAuthenticated: true, accessToken: 'tok' })
       renderSidebar()
       // The plan label (p tag) shows "Admin" — use a more specific selector to avoid matching the nav link
       expect(screen.getByText('admin@test.com').closest('div')?.querySelector('p:last-child')).toHaveTextContent('Admin')
@@ -158,13 +158,13 @@ describe('Sidebar', () => {
     })
 
     it('does not show premium request for premium user', () => {
-      useAuthStore.setState({ user: { id: '1', email: 'user@test.com', isAdmin: false, isPremium: true }, isAuthenticated: true, accessToken: 'tok' })
+      useAuthStore.setState({ user: { id: '1', email: 'user@test.com', isAdmin: false, isPremium: true, provider: null }, isAuthenticated: true, accessToken: 'tok' })
       renderSidebar()
       expect(screen.queryByRole('button', { name: /request premium access/i })).not.toBeInTheDocument()
     })
 
     it('does not show premium request for admin user', () => {
-      useAuthStore.setState({ user: { id: '1', email: 'admin@test.com', isAdmin: true, isPremium: false }, isAuthenticated: true, accessToken: 'tok' })
+      useAuthStore.setState({ user: { id: '1', email: 'admin@test.com', isAdmin: true, isPremium: false, provider: null }, isAuthenticated: true, accessToken: 'tok' })
       renderSidebar()
       expect(screen.queryByRole('button', { name: /request premium access/i })).not.toBeInTheDocument()
     })
@@ -195,7 +195,7 @@ describe('Sidebar', () => {
       vi.mocked(usePremiumHook.useRequestPremium).mockReturnValue({
         mutate: mockRequestPremium,
         isPending: true,
-      } as ReturnType<typeof usePremiumHook.useRequestPremium>)
+      } as any as ReturnType<typeof usePremiumHook.useRequestPremium>)
       renderSidebar()
       fireEvent.click(screen.getByRole('button', { name: /request premium access/i }))
       expect(screen.getByRole('button', { name: /confirm/i })).toBeDisabled()
