@@ -194,7 +194,7 @@ resource "aws_ecs_task_definition" "migrate" {
     ]
 
     secrets = [
-      { name = "DATABASE_URL", valueFrom = "${var.db_secret_arn}::::" },
+      { name = "DATABASE_URL", valueFrom = var.db_secret_arn },
     ]
 
     logConfiguration = {
