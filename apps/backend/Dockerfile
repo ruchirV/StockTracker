@@ -16,11 +16,11 @@ COPY packages/types/ packages/types/
 COPY apps/backend/ apps/backend/
 
 # Generate Prisma client and compile TypeScript
-RUN npm run -w apps/backend prisma generate
+RUN cd apps/backend && npx prisma generate
 RUN npm run -w apps/backend build
 
-# Prune to production dependencies only
-RUN npm prune --omit=dev --workspace=apps/backend
+# Prune devDependencies from the workspace — keeps prisma + engines in root node_modules
+RUN npm prune --omit=dev
 
 # ── Stage 2: Run ──────────────────────────────────────────────────────────────
 FROM node:20-alpine AS runner
@@ -32,12 +32,12 @@ ENV NODE_ENV=production
 # Non-root user for security
 RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001
 
-# Copy built output and pruned node_modules from builder
+# Keep the full monorepo node_modules structure so hoisted prisma packages resolve
+COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/node_modules ./apps/backend/node_modules
 COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/dist ./dist
-COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/node_modules ./node_modules
 COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/prisma ./prisma
-
-# Prisma generated client is embedded in node_modules — no extra copy needed
+COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/prisma.config.ts ./prisma.config.ts
 
 USER nestjs
 
@@ -46,4 +46,4 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD wget -qO- http://localhost:3001/health || exit 1
 
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/src/main.js"]
