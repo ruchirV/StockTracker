@@ -92,7 +92,7 @@ module "ecs" {
   task_cpu              = var.ecs_task_cpu
   task_memory           = var.ecs_task_memory
   secrets_arn_prefix    = module.secrets.secrets_arn_prefix
-  db_secret_arn         = module.rds.db_password_secret_arn
+  db_secret_arn         = module.rds.database_url_secret_arn
 }
 
 # ── CloudFront + S3 (frontend) ────────────────────────────────────────────────
