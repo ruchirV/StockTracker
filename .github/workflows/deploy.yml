@@ -173,7 +173,6 @@ jobs:
           aws ecs update-service \
             --cluster ${{ steps.tofu-outputs.outputs.cluster_name }} \
             --service ${{ steps.tofu-outputs.outputs.service_name }} \
-            --task-definition $ECR_BACKEND_REPO:${{ needs.docker-push.outputs.image-tag }} \
             --force-new-deployment
 
       - name: Wait for ECS service stability
