@@ -187,7 +187,7 @@ resource "aws_ecs_task_definition" "migrate" {
     name  = "migrate"
     image = "${var.ecr_backend_url}:${var.backend_image_tag}"
 
-    command = ["node", "-e", "require('child_process').execSync('npx prisma migrate deploy', {stdio:'inherit'})"]
+    command = ["node", "node_modules/.bin/prisma", "migrate", "deploy", "--config", "prisma.config.ts"]
 
     environment = [
       { name = "NODE_ENV", value = "production" },
