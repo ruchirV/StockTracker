@@ -147,7 +147,7 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "NODE_ENV",               value = "production" },
       { name = "PORT",                   value = "3001" },
       { name = "LLM_PROVIDER",           value = "groq" },
-      { name = "FRONTEND_URL",           value = "https://${var.env == "prod" ? "stocktracker.dev" : "staging.stocktracker.dev"}" },
+      { name = "FRONTEND_URL",           value = "https://${var.env == "prod" ? "stocktracker.dev" : "stocktracker.ruchirv.dev"}" },
       { name = "REDIS_URL",              value = "redis://${var.redis_url}" },
       { name = "BULLMQ_REDIS_URL",       value = "redis://${var.redis_url}" },
     ]
