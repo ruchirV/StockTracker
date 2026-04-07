@@ -6,7 +6,10 @@ import { PrismaPg } from '@prisma/adapter-pg'
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor() {
     // Prisma 7 requires a driver adapter — the URL is no longer read from the schema
-    const adapter = new PrismaPg({ connectionString: process.env['DATABASE_URL']!, ssl: { rejectUnauthorized: false } })
+    const adapter = new PrismaPg({
+      connectionString: process.env['DATABASE_URL']!,
+      ssl: { rejectUnauthorized: false },
+    })
     super({ adapter })
   }
 
