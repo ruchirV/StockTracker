@@ -23,6 +23,7 @@ export class AppService {
       db: dbOk ? 'connected' : 'error',
       redis: redisOk ? 'connected' : 'error',
       uptime: Math.floor(process.uptime()),
+      version: process.env['GIT_SHA'] ?? 'dev',
     }
   }
 }
