@@ -109,6 +109,26 @@ resource "aws_iam_role" "task" {
   tags = { Env = var.env }
 }
 
+# SSM permissions required for ECS Exec (exec into running containers)
+resource "aws_iam_role_policy" "task_ssm_exec" {
+  name = "ecs-exec-ssm"
+  role = aws_iam_role.task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "ssmmessages:CreateControlChannel",
+        "ssmmessages:CreateDataChannel",
+        "ssmmessages:OpenControlChannel",
+        "ssmmessages:OpenDataChannel"
+      ]
+      Resource = "*"
+    }]
+  })
+}
+
 # ── CloudWatch log group ──────────────────────────────────────────────────────
 resource "aws_cloudwatch_log_group" "backend" {
   name              = "/ecs/stocktracker-${var.env}-backend"
@@ -252,6 +272,8 @@ resource "aws_ecs_service" "backend" {
 
   deployment_minimum_healthy_percent = 50
   deployment_maximum_percent         = 200
+
+  enable_execute_command = true
 
   tags = { Env = var.env }
 }
