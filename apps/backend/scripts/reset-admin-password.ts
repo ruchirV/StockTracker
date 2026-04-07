@@ -10,12 +10,17 @@
 import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
+import { Pool } from 'pg'
 import * as bcrypt from 'bcryptjs'
 
-const adapter = new PrismaPg({ connectionString: process.env['DATABASE_URL']! })
+const connectionString = process.env['DATABASE_URL']!
+const ssl = connectionString.includes('sslmode=require') ? { rejectUnauthorized: false } : undefined
+const pool = new Pool({ connectionString, ssl })
+const adapter = new PrismaPg(pool)
 const prisma = new PrismaClient({ adapter })
 
 async function main() {
+  console.log(`Lets begin resetting the admin password...`)
   const email = process.env['ADMIN_EMAIL']
   const newPassword = process.env['ADMIN_NEW_PASSWORD']
 
@@ -25,6 +30,8 @@ async function main() {
     )
     process.exit(1)
   }
+
+  console.log(`Resetting password for admin: ${email}...`)
 
   const user = await prisma.user.findUnique({ where: { email } })
   if (!user) {
@@ -37,6 +44,8 @@ async function main() {
     process.exit(1)
   }
 
+  console.log(`hashing the password for admin: ${email}...`)
+
   const passwordHash = await bcrypt.hash(newPassword, 12)
   await prisma.user.update({ where: { email }, data: { passwordHash } })
   console.log(`✓ Password successfully reset for admin: ${email}`)
@@ -44,8 +53,9 @@ async function main() {
 
 main()
   .then(() => prisma.$disconnect())
+  .then(() => pool.end())
   .catch((err) => {
     console.error(err)
-    void prisma.$disconnect()
+    void prisma.$disconnect().then(() => pool.end())
     process.exit(1)
   })

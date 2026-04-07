@@ -10,9 +10,13 @@
 import 'dotenv/config'
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
+import { Pool } from 'pg'
 import * as bcrypt from 'bcryptjs'
 
-const adapter = new PrismaPg({ connectionString: process.env['DATABASE_URL']! })
+const connectionString = process.env['DATABASE_URL']!
+const ssl = connectionString.includes('sslmode=require') ? { rejectUnauthorized: false } : undefined
+const pool = new Pool({ connectionString, ssl })
+const adapter = new PrismaPg(pool)
 const prisma = new PrismaClient({ adapter })
 
 async function main() {
@@ -42,8 +46,9 @@ async function main() {
 
 main()
   .then(() => prisma.$disconnect())
+  .then(() => pool.end())
   .catch((err) => {
     console.error(err)
-    void prisma.$disconnect()
+    void prisma.$disconnect().then(() => pool.end())
     process.exit(1)
   })
