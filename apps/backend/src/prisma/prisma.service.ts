@@ -8,7 +8,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   constructor() {
     // Prisma 7 requires a driver adapter — the URL is no longer read from the schema.
     // SSL rejectUnauthorized:false is required for RDS which uses an AWS-internal CA chain.
-    const pool = new Pool({ connectionString: process.env['DATABASE_URL']!, ssl: { rejectUnauthorized: false } })
+    const pool = new Pool({
+      connectionString: process.env['DATABASE_URL']!,
+      ssl: { rejectUnauthorized: false },
+    })
     const adapter = new PrismaPg(pool)
     super({ adapter })
   }
