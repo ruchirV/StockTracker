@@ -23,10 +23,6 @@ async function bootstrap() {
     credentials: true,
   })
 
-  // Global /api prefix — frontend axios baseURL is /api; CloudFront routes /api/* to this backend.
-  // Exclude /health so the ECS/ALB health check at /health continues to work.
-  app.setGlobalPrefix('api', { exclude: ['health'] })
-
   // Global validation: strip unknown fields, reject invalid DTOs
   app.useGlobalPipes(
     new ValidationPipe({
