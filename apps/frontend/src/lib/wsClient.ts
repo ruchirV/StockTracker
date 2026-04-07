@@ -15,7 +15,9 @@ class WsClient {
     const token = useAuthStore.getState().accessToken
     if (!token) return
 
-    const url = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.hostname}:3001/ws?token=${token}`
+    const isLocalhost = window.location.hostname === 'localhost'
+    const host = isLocalhost ? `${window.location.hostname}:3001` : window.location.hostname
+    const url = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${host}/ws?token=${token}`
     this.ws = new WebSocket(url)
 
     this.ws.onopen = () => {

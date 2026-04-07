@@ -68,9 +68,10 @@ resource "aws_cloudfront_distribution" "frontend" {
     max_ttl     = 0
   }
 
-  # /ws/* → backend ALB (WebSocket upgrade — no caching, forward all)
+  # /ws* → backend ALB (WebSocket upgrade — no caching, forward all)
+  # Pattern is /ws* (not /ws/*) so it matches the bare /ws path the gateway uses
   ordered_cache_behavior {
-    path_pattern           = "/ws/*"
+    path_pattern           = "/ws*"
     target_origin_id       = "alb-backend"
     viewer_protocol_policy = "redirect-to-https"
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
