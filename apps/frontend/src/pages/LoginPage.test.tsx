@@ -25,7 +25,7 @@ beforeEach(() => {
     mutate: mockLogin,
     isPending: false,
     error: null,
-  } as ReturnType<typeof useAuthHook.useLogin>)
+  } as unknown as ReturnType<typeof useAuthHook.useLogin>)
 })
 
 describe('LoginPage', () => {
@@ -134,7 +134,7 @@ describe('LoginPage', () => {
         mutate: mockLogin,
         isPending: true,
         error: null,
-      } as ReturnType<typeof useAuthHook.useLogin>)
+      } as unknown as ReturnType<typeof useAuthHook.useLogin>)
       renderLogin()
       expect(screen.getByRole('button', { name: /signing in/i })).toBeDisabled()
     })

@@ -25,7 +25,7 @@ beforeEach(() => {
     mutate: mockRegister,
     isPending: false,
     error: null,
-  } as ReturnType<typeof useAuthHook.useRegister>)
+  } as unknown as ReturnType<typeof useAuthHook.useRegister>)
 })
 
 describe('RegisterPage', () => {
@@ -167,7 +167,7 @@ describe('RegisterPage', () => {
         mutate: mockRegister,
         isPending: true,
         error: null,
-      } as ReturnType<typeof useAuthHook.useRegister>)
+      } as unknown as ReturnType<typeof useAuthHook.useRegister>)
       renderRegister()
       expect(screen.getByRole('button', { name: /creating account/i })).toBeDisabled()
     })
