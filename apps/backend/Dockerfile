@@ -27,7 +27,9 @@ FROM node:20-alpine AS runner
 
 WORKDIR /app
 
+ARG GIT_SHA=dev
 ENV NODE_ENV=production
+ENV GIT_SHA=$GIT_SHA
 
 # Non-root user for security
 RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001

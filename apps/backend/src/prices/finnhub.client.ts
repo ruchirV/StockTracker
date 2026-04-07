@@ -24,7 +24,7 @@ export class FinnhubClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(FinnhubClient.name)
   private ws: WebSocket | null = null
   private readonly apiKey: string
-  private reconnectDelay = 1000
+  private reconnectDelay = 2000
   private destroyed = false
   private pendingSubscriptions = new Set<string>()
 
@@ -102,6 +102,10 @@ export class FinnhubClient implements OnModuleInit, OnModuleDestroy {
 
     this.ws.on('error', (err) => {
       this.logger.error('Finnhub WebSocket error', err.message)
+      if (err.message.includes('429')) {
+        // Rate limited — back off for 60s before next attempt
+        this.reconnectDelay = 60_000
+      }
     })
   }
 

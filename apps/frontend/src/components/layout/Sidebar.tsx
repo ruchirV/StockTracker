@@ -189,6 +189,12 @@ export function Sidebar() {
           Sign out
         </button>
       </div>
+
+      <div className="px-4 pb-3 text-center">
+        <span className="text-[10px] text-slate-600 font-mono">
+          {import.meta.env.VITE_GIT_SHA ? import.meta.env.VITE_GIT_SHA.slice(0, 7) : 'dev'}
+        </span>
+      </div>
     </aside>
   )
 }

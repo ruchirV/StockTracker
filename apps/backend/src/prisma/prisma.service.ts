@@ -7,11 +7,13 @@ import { Pool } from 'pg'
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor() {
     // Prisma 7 requires a driver adapter — the URL is no longer read from the schema.
-    // SSL rejectUnauthorized:false is required for RDS which uses an AWS-internal CA chain.
-    const pool = new Pool({
-      connectionString: process.env['DATABASE_URL']!,
-      ssl: { rejectUnauthorized: false },
-    })
+    // SSL is only enabled when the connection string requests it (staging/prod RDS).
+    // Local Postgres does not support SSL so we must not pass ssl config there.
+    const connectionString = process.env['DATABASE_URL']!
+    const ssl = connectionString.includes('sslmode=require')
+      ? { rejectUnauthorized: false }
+      : undefined
+    const pool = new Pool({ connectionString, ssl })
     const adapter = new PrismaPg(pool)
     super({ adapter })
   }
