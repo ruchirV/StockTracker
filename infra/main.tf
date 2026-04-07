@@ -102,4 +102,5 @@ module "cdn" {
   env             = var.env
   domain_name     = var.frontend_domain
   certificate_arn = var.cloudfront_certificate_arn
+  alb_dns_name    = module.alb.alb_dns_name
 }
