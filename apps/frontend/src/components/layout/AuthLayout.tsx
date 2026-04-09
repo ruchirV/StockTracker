@@ -8,7 +8,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
   return (
     <div className="min-h-screen flex">
       {/* Left branding panel — hidden on small screens */}
-      <div className="hidden lg:flex lg:w-5/12 xl:w-1/2 bg-slate-900 flex-col justify-between p-12 relative overflow-hidden">
+      <aside aria-label="Product features" className="hidden lg:flex lg:w-5/12 xl:w-1/2 bg-slate-900 flex-col justify-between p-12 relative overflow-hidden">
         {/* Grid background */}
         <div className="absolute inset-0 opacity-10" aria-hidden="true">
           <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
@@ -88,10 +88,10 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         <div className="relative z-10">
           <p className="text-slate-500 text-xs">Built with React · NestJS · D3 · WebSockets</p>
         </div>
-      </div>
+      </aside>
 
       {/* Right form panel */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-slate-50">
+      <main className="flex-1 flex items-center justify-center p-6 sm:p-12 bg-slate-50">
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="flex items-center gap-2.5 mb-10 lg:hidden">
@@ -103,7 +103,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
 
           {children}
         </div>
-      </div>
+      </main>
     </div>
   )
 }
@@ -215,7 +215,7 @@ export function OAuthSection({ mode }: { mode: 'login' | 'register' }) {
 
       <div className="grid grid-cols-2 gap-3">
         <a
-          href="/api/auth/google"
+          href={`${import.meta.env.VITE_API_URL ?? 'http://localhost:3001'}/auth/google`}
           className="flex items-center justify-center gap-2.5 px-4 py-2.5 bg-white border border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
           aria-label={`${label} Google`}
         >
@@ -223,7 +223,7 @@ export function OAuthSection({ mode }: { mode: 'login' | 'register' }) {
           Google
         </a>
         <a
-          href="/api/auth/github"
+          href={`${import.meta.env.VITE_API_URL ?? 'http://localhost:3001'}/auth/github`}
           className="flex items-center justify-center gap-2.5 px-4 py-2.5 bg-white border border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
           aria-label={`${label} GitHub`}
         >

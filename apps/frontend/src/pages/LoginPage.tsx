@@ -91,7 +91,7 @@ export function LoginPage() {
             <label htmlFor="password" className="block text-sm font-medium text-slate-700">
               Password
             </label>
-            <span className="text-xs font-medium text-green-600 cursor-default">Forgot password?</span>
+            <span className="text-xs font-medium text-green-700 cursor-default">Forgot password?</span>
           </div>
           <div className="relative">
             <input
@@ -103,7 +103,7 @@ export function LoginPage() {
               aria-describedby={errors.password ? 'password-error' : undefined}
               aria-invalid={!!errors.password}
               {...register('password')}
-              className="w-full px-3.5 py-2.5 pr-10 text-sm text-slate-900 bg-white border border-slate-300 rounded-lg placeholder:text-slate-400 transition-colors hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-600 aria-[invalid=true]:border-red-400 aria-[invalid=true]:bg-red-50"
+              className="w-full px-3.5 py-2.5 pr-10 text-sm text-slate-900 bg-white border border-slate-300 rounded-lg placeholder:text-slate-400 transition-colors hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-green-600/30 focus:border-green-700 aria-[invalid=true]:border-red-400 aria-[invalid=true]:bg-red-50"
             />
             <button
               type="button"
@@ -127,7 +127,7 @@ export function LoginPage() {
           type="submit"
           disabled={isPending}
           aria-busy={isPending}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white text-sm font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-700 hover:bg-green-800 active:bg-green-900 text-white text-sm font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isPending && <Spinner />}
           {isPending ? 'Signing in…' : 'Sign in'}
@@ -138,7 +138,7 @@ export function LoginPage() {
 
       <p className="mt-6 text-center text-sm text-slate-500">
         Don&apos;t have an account?{' '}
-        <Link to="/register" className="font-semibold text-green-600 hover:text-green-700 focus:outline-none focus:underline">
+        <Link to="/register" className="font-semibold text-green-700 hover:text-green-800 focus:outline-none focus:underline">
           Create one free
         </Link>
       </p>

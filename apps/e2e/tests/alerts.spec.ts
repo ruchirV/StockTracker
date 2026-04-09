@@ -22,7 +22,8 @@ test.describe('Alerts', () => {
   })
 
   test('alerts page has no accessibility violations', async ({ loggedInPage: page }) => {
-    await page.goto('/alerts')
+    await page.getByRole('link', { name: /alerts/i }).click()
+    await page.waitForURL(/alerts/)
     const results = await new AxeBuilder({ page }).analyze()
     expect(results.violations).toEqual([])
   })

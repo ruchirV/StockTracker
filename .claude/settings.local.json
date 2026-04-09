@@ -4,7 +4,9 @@
       "Bash(npm install:*)",
       "Bash(npx prisma:*)",
       "Bash(docker compose:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(npx vitest:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

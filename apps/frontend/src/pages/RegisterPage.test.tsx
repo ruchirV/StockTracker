@@ -202,7 +202,7 @@ describe('RegisterPage', () => {
       renderRegister()
       expect(screen.getByRole('link', { name: /continue with google/i })).toHaveAttribute(
         'href',
-        '/api/auth/google',
+        'http://localhost:3001/auth/google',
       )
     })
 
@@ -210,7 +210,7 @@ describe('RegisterPage', () => {
       renderRegister()
       expect(screen.getByRole('link', { name: /continue with github/i })).toHaveAttribute(
         'href',
-        '/api/auth/github',
+        'http://localhost:3001/auth/github',
       )
     })
   })
