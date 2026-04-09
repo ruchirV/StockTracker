@@ -215,7 +215,7 @@ export function OAuthSection({ mode }: { mode: 'login' | 'register' }) {
 
       <div className="grid grid-cols-2 gap-3">
         <a
-          href="/api/auth/google"
+          href={`${import.meta.env.VITE_API_URL ?? 'http://localhost:3001'}/auth/google`}
           className="flex items-center justify-center gap-2.5 px-4 py-2.5 bg-white border border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
           aria-label={`${label} Google`}
         >
@@ -223,7 +223,7 @@ export function OAuthSection({ mode }: { mode: 'login' | 'register' }) {
           Google
         </a>
         <a
-          href="/api/auth/github"
+          href={`${import.meta.env.VITE_API_URL ?? 'http://localhost:3001'}/auth/github`}
           className="flex items-center justify-center gap-2.5 px-4 py-2.5 bg-white border border-slate-300 hover:border-slate-400 hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
           aria-label={`${label} GitHub`}
         >

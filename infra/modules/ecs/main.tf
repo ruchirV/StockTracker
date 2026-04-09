@@ -172,8 +172,8 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "BULLMQ_REDIS_URL",          value = "redis://${var.redis_url}" },
       { name = "JWT_ACCESS_EXPIRES_IN",     value = "15m" },
       { name = "JWT_REFRESH_EXPIRES_IN",    value = "7d" },
-      { name = "GOOGLE_CALLBACK_URL",       value = "https://${var.env == "prod" ? "stocktracker.dev" : "stocktracker.ruchirv.dev"}/api/auth/google/callback" },
-      { name = "GITHUB_CALLBACK_URL",       value = "https://${var.env == "prod" ? "stocktracker.dev" : "stocktracker.ruchirv.dev"}/api/auth/github/callback" },
+      { name = "GOOGLE_CALLBACK_URL",       value = "https://${var.env == "prod" ? "api.stocktracker.dev" : "api.stocktracker.ruchirv.dev"}/auth/google/callback" },
+      { name = "GITHUB_CALLBACK_URL",       value = "https://${var.env == "prod" ? "api.stocktracker.dev" : "api.stocktracker.ruchirv.dev"}/auth/github/callback" },
       { name = "SMTP_PORT",                 value = "587" },
     ]
 
