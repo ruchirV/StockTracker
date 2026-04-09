@@ -20,7 +20,7 @@ test.describe('Authentication', () => {
     // Login
     await page.goto('/login')
     await page.getByLabel(/email/i).fill(email)
-    await page.getByLabel(/password/i).fill(password)
+    await page.getByLabel(/^password$/i).fill(password)
     await page.getByRole('button', { name: /log in|sign in/i }).click()
     await expect(page).toHaveURL(/dashboard|watchlist/, { timeout: 10_000 })
 
@@ -44,8 +44,8 @@ test.describe('Authentication', () => {
   test('invalid credentials shows error', async ({ page }) => {
     await page.goto('/login')
     await page.getByLabel(/email/i).fill('nonexistent@test.com')
-    await page.getByLabel(/password/i).fill('wrongpassword')
+    await page.getByLabel(/^password$/i).fill('wrongpassword')
     await page.getByRole('button', { name: /log in|sign in/i }).click()
-    await expect(page.getByRole('alert').or(page.getByText(/invalid|incorrect/i))).toBeVisible()
+    await expect(page.getByRole('alert').first()).toBeVisible()
   })
 })

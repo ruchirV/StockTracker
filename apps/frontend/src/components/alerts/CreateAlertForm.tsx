@@ -72,7 +72,7 @@ export function CreateAlertForm() {
               aria-pressed={direction === 'above'}
               className={`px-3 py-2 font-medium transition-colors ${
                 direction === 'above'
-                  ? 'bg-green-600 text-white'
+                  ? 'bg-green-700 text-white'
                   : 'bg-white text-gray-600 hover:bg-gray-50'
               }`}
             >

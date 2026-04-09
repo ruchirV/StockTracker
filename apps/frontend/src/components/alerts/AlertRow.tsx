@@ -9,7 +9,7 @@ export function AlertRow({ alert }: Props) {
   const { mutate: remove, isPending } = useDeleteAlert()
 
   const directionLabel = alert.direction === 'above' ? '↑ Above' : '↓ Below'
-  const directionColor = alert.direction === 'above' ? 'text-green-600' : 'text-red-600'
+  const directionColor = alert.direction === 'above' ? 'text-green-700' : 'text-red-700'
   const statusLabel = alert.isActive ? 'Active' : 'Fired'
   const statusColor = alert.isActive
     ? 'bg-green-100 text-green-700'

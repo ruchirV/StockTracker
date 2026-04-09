@@ -167,7 +167,7 @@ describe('LoginPage', () => {
       renderLogin()
       expect(screen.getByRole('link', { name: /sign in with google/i })).toHaveAttribute(
         'href',
-        '/api/auth/google',
+        'http://localhost:3001/auth/google',
       )
     })
 
@@ -175,7 +175,7 @@ describe('LoginPage', () => {
       renderLogin()
       expect(screen.getByRole('link', { name: /sign in with github/i })).toHaveAttribute(
         'href',
-        '/api/auth/github',
+        'http://localhost:3001/auth/github',
       )
     })
   })

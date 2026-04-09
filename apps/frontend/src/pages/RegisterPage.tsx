@@ -96,7 +96,7 @@ export function RegisterPage() {
             aria-describedby={errors.email ? 'reg-email-error' : undefined}
             aria-invalid={!!errors.email}
             {...field('email')}
-            className="w-full px-3.5 py-2.5 text-sm text-slate-900 bg-white border border-slate-300 rounded-lg placeholder:text-slate-400 transition-colors hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-600 aria-[invalid=true]:border-red-400 aria-[invalid=true]:bg-red-50"
+            className="w-full px-3.5 py-2.5 text-sm text-slate-900 bg-white border border-slate-300 rounded-lg placeholder:text-slate-400 transition-colors hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-green-600/30 focus:border-green-700 aria-[invalid=true]:border-red-400 aria-[invalid=true]:bg-red-50"
           />
           {errors.email && (
             <p id="reg-email-error" role="alert" className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
@@ -120,7 +120,7 @@ export function RegisterPage() {
               aria-describedby="password-strength-desc reg-password-error"
               aria-invalid={!!errors.password}
               {...field('password')}
-              className="w-full px-3.5 py-2.5 pr-10 text-sm text-slate-900 bg-white border border-slate-300 rounded-lg placeholder:text-slate-400 transition-colors hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-600 aria-[invalid=true]:border-red-400 aria-[invalid=true]:bg-red-50"
+              className="w-full px-3.5 py-2.5 pr-10 text-sm text-slate-900 bg-white border border-slate-300 rounded-lg placeholder:text-slate-400 transition-colors hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-green-600/30 focus:border-green-700 aria-[invalid=true]:border-red-400 aria-[invalid=true]:bg-red-50"
             />
             <button
               type="button"
@@ -168,7 +168,7 @@ export function RegisterPage() {
               aria-describedby={errors.confirmPassword ? 'confirm-error' : undefined}
               aria-invalid={!!errors.confirmPassword}
               {...field('confirmPassword')}
-              className="w-full px-3.5 py-2.5 pr-10 text-sm text-slate-900 bg-white border border-slate-300 rounded-lg placeholder:text-slate-400 transition-colors hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-green-500/30 focus:border-green-600 aria-[invalid=true]:border-red-400 aria-[invalid=true]:bg-red-50"
+              className="w-full px-3.5 py-2.5 pr-10 text-sm text-slate-900 bg-white border border-slate-300 rounded-lg placeholder:text-slate-400 transition-colors hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-green-600/30 focus:border-green-700 aria-[invalid=true]:border-red-400 aria-[invalid=true]:bg-red-50"
             />
             <button
               type="button"
@@ -192,7 +192,7 @@ export function RegisterPage() {
           type="submit"
           disabled={isPending}
           aria-busy={isPending}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 active:bg-green-800 text-white text-sm font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-700 hover:bg-green-800 active:bg-green-900 text-white text-sm font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isPending && <Spinner />}
           {isPending ? 'Creating account…' : 'Create account'}
@@ -203,7 +203,7 @@ export function RegisterPage() {
 
       <p className="mt-6 text-center text-sm text-slate-500">
         Already have an account?{' '}
-        <Link to="/login" className="font-semibold text-green-600 hover:text-green-700 focus:outline-none focus:underline">
+        <Link to="/login" className="font-semibold text-green-700 hover:text-green-800 focus:outline-none focus:underline">
           Sign in
         </Link>
       </p>

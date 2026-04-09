@@ -10,7 +10,7 @@ test.describe('Admin', () => {
     // Login as admin
     await page.goto('/login')
     await page.getByLabel(/email/i).fill(adminEmail)
-    await page.getByLabel(/password/i).fill(adminPassword)
+    await page.getByLabel(/^password$/i).fill(adminPassword)
     await page.getByRole('button', { name: /log in|sign in/i }).click()
     await expect(page).toHaveURL(/dashboard|admin/, { timeout: 10_000 })
 
