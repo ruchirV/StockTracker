@@ -69,11 +69,12 @@ enum AlertDirection {
 }
 
 model WatchlistItem {
-  id      String   @id @default(cuid())
-  symbol  String
-  userId  String
-  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  addedAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  symbol      String
+  companyName String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addedAt     DateTime @default(now())
 
   @@unique([userId, symbol])
 }

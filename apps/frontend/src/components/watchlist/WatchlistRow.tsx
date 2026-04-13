@@ -3,29 +3,6 @@ import { usePriceStore } from '@/stores/priceStore'
 import { useRemoveFromWatchlist } from '@/hooks/useWatchlist'
 import type { WatchlistItemDto } from '@stocktracker/types'
 
-// Static lookup for top 20 symbols — company name shown in the watchlist row
-const COMPANY_NAMES: Record<string, string> = {
-  AAPL: 'Apple Inc.',
-  MSFT: 'Microsoft Corp.',
-  GOOGL: 'Alphabet Inc.',
-  GOOG: 'Alphabet Inc.',
-  AMZN: 'Amazon.com Inc.',
-  NVDA: 'NVIDIA Corp.',
-  META: 'Meta Platforms',
-  TSLA: 'Tesla Inc.',
-  BRK: 'Berkshire Hathaway',
-  JPM: 'JPMorgan Chase',
-  V: 'Visa Inc.',
-  UNH: 'UnitedHealth Group',
-  JNJ: 'Johnson & Johnson',
-  XOM: 'Exxon Mobil',
-  AVGO: 'Broadcom Inc.',
-  PG: 'Procter & Gamble',
-  MA: 'Mastercard Inc.',
-  HD: 'Home Depot Inc.',
-  COST: 'Costco Wholesale',
-  NFLX: 'Netflix Inc.',
-}
 
 interface Props {
   item: WatchlistItemDto
@@ -67,7 +44,7 @@ export function WatchlistRow({ item, isExpanded, onToggle }: Props) {
         : 'transition-colors duration-800'
   const expandedBorder = isExpanded ? 'border-l-2 border-blue-500' : 'border-l-2 border-transparent'
 
-  const companyName = COMPANY_NAMES[item.symbol] ?? '—'
+  const companyName = item.companyName ?? item.symbol
 
   return (
     <div className={`flex items-center rounded-none ${flashClass} ${expandedBorder}`}>

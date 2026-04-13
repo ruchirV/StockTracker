@@ -80,7 +80,7 @@ describe('WatchlistService', () => {
       const result = await service.add('u1', 'AAPL')
       expect(result.symbol).toBe('AAPL')
       expect(mockPrisma.watchlistItem.create).toHaveBeenCalledWith({
-        data: { userId: 'u1', symbol: 'AAPL' },
+        data: { userId: 'u1', symbol: 'AAPL', companyName: null },
       })
     })
 
@@ -107,14 +107,19 @@ describe('WatchlistService', () => {
       const item = { id: '1', symbol: 'AAPL', userId: 'u1', addedAt: new Date('2024-01-01') }
       mockPrisma.watchlistItem.create.mockResolvedValue(item)
       mockRedisPub.hget.mockResolvedValue('150.00') // already cached
-      const axiosSpy = jest.spyOn(axios, 'get')
+      // resolveCompanyName will call the /search endpoint — mock it to return empty results
+      const axiosSpy = jest.spyOn(axios, 'get').mockResolvedValue({ data: { result: [] } })
 
       await service.add('u1', 'AAPL')
       await new Promise((resolve) => {
         process.nextTick(resolve)
       })
 
-      expect(axiosSpy).not.toHaveBeenCalled()
+      // The Finnhub /quote endpoint must NOT be called — price already in Redis
+      expect(axiosSpy).not.toHaveBeenCalledWith(
+        'https://finnhub.io/api/v1/quote',
+        expect.anything(),
+      )
     })
 
     it('throws ConflictException on duplicate symbol', async () => {
