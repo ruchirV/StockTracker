@@ -30,6 +30,8 @@ export interface UserDto {
 export interface WatchlistItemDto {
   id: string
   symbol: string
+  /** Resolved from Finnhub at add-time and persisted in DB. Null for items added before this feature. */
+  companyName: string | null
   addedAt: string
   /** Populated from Redis cache — null if no tick received yet */
   latestPrice: PriceTick | null

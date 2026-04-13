@@ -59,14 +59,16 @@ export class WatchlistService {
   }
 
   async add(userId: string, symbol: string) {
+    // Resolve company name and seed price in parallel — both are best-effort.
+    const [companyName] = await Promise.all([
+      this.resolveCompanyName(symbol),
+      this.seedRedisPrice(symbol),
+    ])
+
     try {
       const item = await this.prisma.watchlistItem.create({
-        data: { userId, symbol },
+        data: { userId, symbol, companyName },
       })
-
-      // Seed Redis with current quote so the price shows immediately
-      // without waiting for a Finnhub WebSocket tick.
-      void this.seedRedisPrice(symbol)
 
       return { ...item, addedAt: item.addedAt.toISOString() }
     } catch (err: unknown) {
@@ -92,6 +94,29 @@ export class WatchlistService {
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────────
+
+  /**
+   * Resolves the human-readable company name for `symbol` by calling the
+   * Finnhub symbol-search endpoint. Returns null on any error so a missing
+   * name never blocks the watchlist add.
+   */
+  private async resolveCompanyName(symbol: string): Promise<string | null> {
+    if (!this.finnhubApiKey) return null
+    try {
+      const resp = await axios.get<{
+        result: Array<{ symbol: string; description: string; type: string }>
+      }>('https://finnhub.io/api/v1/search', {
+        params: { q: symbol, token: this.finnhubApiKey },
+        timeout: 5000,
+      })
+      const match = resp.data.result.find((r) => r.symbol === symbol && r.type === 'Common Stock')
+      return match?.description ?? null
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      this.logger.warn(`Failed to resolve company name for ${symbol}: ${msg}`)
+      return null
+    }
+  }
 
   /**
    * Seeds the Redis price cache for `symbol` using the Finnhub /quote REST

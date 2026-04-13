@@ -14,6 +14,7 @@ const mockRemove = vi.fn()
 const baseItem: WatchlistItemDto = {
   id: 'item-1',
   symbol: 'AAPL',
+  companyName: 'Apple Inc.',
   addedAt: '2026-01-01T00:00:00Z',
   latestPrice: null,
 }
@@ -52,15 +53,15 @@ describe('WatchlistRow', () => {
       expect(screen.getByText('AAPL')).toBeInTheDocument()
     })
 
-    it('shows company name for known symbol', () => {
+    it('shows companyName from item', () => {
       renderRow()
       expect(screen.getByText('Apple Inc.')).toBeInTheDocument()
     })
 
-    it('shows — for unknown symbol company name', () => {
-      renderRow({ item: { ...baseItem, symbol: 'XYZ' } })
-      // Use a selector scoped to the company name span to avoid matching the price "—"
-      expect(screen.getByText('—', { selector: '.text-gray-500' })).toBeInTheDocument()
+    it('falls back to symbol when companyName is null', () => {
+      renderRow({ item: { ...baseItem, symbol: 'XYZ', companyName: null } })
+      // Company name span should display the symbol as fallback
+      expect(screen.getByText('XYZ', { selector: '.text-gray-500' })).toBeInTheDocument()
     })
 
     it('shows — when no price data', () => {
