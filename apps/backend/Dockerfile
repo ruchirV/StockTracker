@@ -30,6 +30,7 @@ WORKDIR /app
 ARG GIT_SHA=dev
 ENV NODE_ENV=production
 ENV GIT_SHA=$GIT_SHA
+ENV NODE_PATH=/app/node_modules:/app/apps/backend/node_modules
 
 # Non-root user for security
 RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001
@@ -48,4 +49,4 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD wget -qO- http://localhost:3001/health || exit 1
 
-CMD ["sh", "-c", "echo \"DEBUG DATABASE_URL prefix: ${DATABASE_URL:0:20}\" && node_modules/.bin/prisma migrate deploy && node dist/src/main.js"]
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node dist/src/main.js"]
