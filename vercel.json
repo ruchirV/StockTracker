@@ -1,4 +1,5 @@
 {
+  "framework": "vite",
   "buildCommand": "npm ci && npm run build -w apps/frontend",
   "outputDirectory": "apps/frontend/dist",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
