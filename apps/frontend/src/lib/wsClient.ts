@@ -15,9 +15,17 @@ class WsClient {
     const token = useAuthStore.getState().accessToken
     if (!token) return
 
-    const isLocalhost = window.location.hostname === 'localhost'
-    const host = isLocalhost ? `${window.location.hostname}:3001` : window.location.hostname
-    const url = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${host}/ws?token=${token}`
+    // In production the WS gateway lives on a different host (Railway), so use
+    // VITE_WS_URL when provided. Fall back to same-origin for local dev.
+    const wsBase = import.meta.env.VITE_WS_URL
+    let url: string
+    if (wsBase) {
+      url = `${wsBase}/ws?token=${token}`
+    } else {
+      const isLocalhost = window.location.hostname === 'localhost'
+      const host = isLocalhost ? `${window.location.hostname}:3001` : window.location.hostname
+      url = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${host}/ws?token=${token}`
+    }
     this.ws = new WebSocket(url)
 
     this.ws.onopen = () => {
