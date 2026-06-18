@@ -27,6 +27,10 @@ import { ChatModule } from './chat/chat.module'
       useFactory: (config: ConfigService) => ({
         connection: {
           url: config.get<string>('BULLMQ_REDIS_URL', 'redis://localhost:6379'),
+          // Required by BullMQ, and prevents a Redis outage from throwing an
+          // uncaught MaxRetriesPerRequestError that crash-loops the process.
+          maxRetriesPerRequest: null,
+          retryStrategy: (times: number) => Math.min(times * 200, 5000),
         },
       }),
     }),
