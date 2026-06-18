@@ -34,10 +34,13 @@ ENV GIT_SHA=$GIT_SHA
 # Non-root user for security
 RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001
 
-# Keep the full monorepo node_modules structure so hoisted prisma packages resolve
+# Preserve the monorepo layout: dist MUST sit at apps/backend/dist so Node's
+# upward module resolution from the running file reaches both the root
+# node_modules (hoisted deps, e.g. prisma) and apps/backend/node_modules
+# (non-hoisted deps, e.g. axios). Moving dist to /app/dist breaks the latter.
 COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/node_modules ./apps/backend/node_modules
-COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/dist ./dist
+COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/dist ./apps/backend/dist
 COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/prisma ./prisma
 COPY --from=builder --chown=nestjs:nodejs /app/apps/backend/prisma.config.ts ./prisma.config.ts
 
@@ -48,4 +51,4 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD wget -qO- http://localhost:3001/health || exit 1
 
-CMD ["sh", "-c", "echo \"DEBUG DATABASE_URL prefix: ${DATABASE_URL:0:20}\" && node_modules/.bin/prisma migrate deploy && node dist/src/main.js"]
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node apps/backend/dist/src/main.js"]
