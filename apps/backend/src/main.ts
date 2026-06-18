@@ -6,7 +6,32 @@ import helmet from 'helmet'
 import cookieParser from 'cookie-parser'
 import { AppModule } from './app.module'
 
+// Environment variables the app cannot start (or function) without. Checking
+// them up front turns a buried, repeating Nest/Prisma stack trace into a single
+// clear line naming exactly what is missing.
+const REQUIRED_ENV = [
+  'DATABASE_URL',
+  'JWT_ACCESS_SECRET',
+  'JWT_REFRESH_SECRET',
+  'JWT_ACCESS_EXPIRES_IN',
+  'JWT_REFRESH_EXPIRES_IN',
+  'FRONTEND_URL',
+] as const
+
+function assertRequiredEnv() {
+  const missing = REQUIRED_ENV.filter((key) => !process.env[key])
+  if (missing.length > 0) {
+    console.error(
+      `❌ Missing required environment variables: ${missing.join(', ')}\n` +
+        `   Set them on the service and redeploy (Railway: Variables → Raw Editor).`,
+    )
+    process.exit(1)
+  }
+}
+
 async function bootstrap() {
+  assertRequiredEnv()
+
   const app = await NestFactory.create(AppModule)
   app.useWebSocketAdapter(new WsAdapter(app))
   const config = app.get(ConfigService)
