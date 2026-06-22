@@ -133,9 +133,14 @@ export function Sidebar() {
         {/* Premium request button — only for free users without a pending request */}
         {!user?.isPremium && !user?.isAdmin && (
           hasPendingRequest ? (
-            <div className="mx-2 flex items-center gap-2 rounded-lg border border-slate-700 px-3 py-2 text-xs text-slate-400">
-              <SpinnerIcon />
-              Request pending…
+            <div className="mx-2 flex items-start gap-2 rounded-lg border border-slate-700/60 bg-slate-800/30 px-3 py-2 text-slate-400">
+              <ClockIcon />
+              <div className="space-y-0.5">
+                <p className="text-xs font-medium text-slate-300">Premium request sent</p>
+                <p className="text-[11px] leading-snug text-slate-500">
+                  An admin will review it soon — no action needed.
+                </p>
+              </div>
             </div>
           ) : (
             <>
@@ -246,14 +251,14 @@ function StarIcon() {
   )
 }
 
-function SpinnerIcon() {
+function ClockIcon() {
   return (
-    <svg className="h-3.5 w-3.5 flex-shrink-0 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <svg className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth={2}
-        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
       />
     </svg>
   )

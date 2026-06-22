@@ -153,7 +153,7 @@ describe('Sidebar', () => {
         data: { id: 'r1', status: 'pending' },
       } as ReturnType<typeof usePremiumHook.usePremiumRequestStatus>)
       renderSidebar()
-      expect(screen.getByText('Request pending…')).toBeInTheDocument()
+      expect(screen.getByText('Premium request sent')).toBeInTheDocument()
       expect(screen.queryByRole('button', { name: /request premium access/i })).not.toBeInTheDocument()
     })
 
