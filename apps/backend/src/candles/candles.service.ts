@@ -1,4 +1,4 @@
-import { Injectable, Inject, BadRequestException, BadGatewayException } from '@nestjs/common'
+import { Injectable, Inject, Logger, BadRequestException, BadGatewayException } from '@nestjs/common'
 import axios, { AxiosError } from 'axios'
 import type Redis from 'ioredis'
 import { REDIS_PUB } from '../redis/redis.constants'
@@ -40,6 +40,8 @@ interface YFResponse {
 
 @Injectable()
 export class CandlesService {
+  private readonly logger = new Logger(CandlesService.name)
+
   constructor(@Inject(REDIS_PUB) private readonly redis: Redis) {}
 
   async getCandles(symbol: string, range: ChartRange): Promise<CandleDto> {
@@ -48,12 +50,31 @@ export class CandlesService {
     }
 
     const cacheKey = `candles:${symbol}:${range}`
-    const cached = await this.redis.get(cacheKey)
+    const cached = await this.cacheGet(cacheKey)
     if (cached) return JSON.parse(cached) as CandleDto
 
     const data = await this.fetchYahoo(symbol, range)
-    await this.redis.set(cacheKey, JSON.stringify(data), 'EX', RANGE_CONFIG[range].ttl)
+    await this.cacheSet(cacheKey, JSON.stringify(data), RANGE_CONFIG[range].ttl)
     return data
+  }
+
+  // Cache is best-effort: if Redis is down or over quota (Upstash free tier),
+  // log and degrade to serving live data rather than failing the request.
+  private async cacheGet(key: string): Promise<string | null> {
+    try {
+      return await this.redis.get(key)
+    } catch (err) {
+      this.logger.warn(`Cache read failed for ${key}: ${(err as Error).message}`)
+      return null
+    }
+  }
+
+  private async cacheSet(key: string, value: string, ttl: number): Promise<void> {
+    try {
+      await this.redis.set(key, value, 'EX', ttl)
+    } catch (err) {
+      this.logger.warn(`Cache write failed for ${key}: ${(err as Error).message}`)
+    }
   }
 
   private async fetchYahoo(symbol: string, range: ChartRange): Promise<CandleDto> {

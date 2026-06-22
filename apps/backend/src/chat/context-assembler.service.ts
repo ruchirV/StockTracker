@@ -42,7 +42,7 @@ export class ContextAssemblerService {
   async assembleContext(userId: string, symbol: string): Promise<SymbolContext> {
     const [fundamentals, priceHash, activeAlerts] = await Promise.all([
       this.getFundamentals(symbol),
-      this.redis.hgetall(`prices:${symbol}`),
+      this.getPriceHash(symbol),
       this.alerts.list(userId),
     ])
 
@@ -117,15 +117,25 @@ export class ContextAssemblerService {
       .join('\n')
   }
 
+  // Cache is best-effort: if Redis is down or over quota (Upstash free tier),
+  // log and degrade gracefully rather than failing the chat request.
+  private async getPriceHash(symbol: string): Promise<Record<string, string>> {
+    try {
+      return await this.redis.hgetall(`prices:${symbol}`)
+    } catch (err) {
+      this.logger.warn(`Cache read failed for prices:${symbol}: ${(err as Error).message}`)
+      return {}
+    }
+  }
+
   private async getFundamentals(symbol: string): Promise<FinnhubProfile | null> {
     const cacheKey = `fundamentals:${symbol}`
-    const cached = await this.redis.get(cacheKey)
-    if (cached) {
-      try {
-        return JSON.parse(cached) as FinnhubProfile
-      } catch {
-        // corrupted cache — fall through to fetch
-      }
+    try {
+      const cached = await this.redis.get(cacheKey)
+      if (cached) return JSON.parse(cached) as FinnhubProfile
+    } catch (err) {
+      // Redis down/over quota or corrupted cache — fall through to fetch.
+      this.logger.warn(`Cache read failed for ${cacheKey}: ${(err as Error).message}`)
     }
 
     if (!this.finnhubApiKey) return null
@@ -136,7 +146,11 @@ export class ContextAssemblerService {
         timeout: 5000,
       })
       if (!resp.data?.name) return null
-      await this.redis.set(cacheKey, JSON.stringify(resp.data), 'EX', 86400)
+      try {
+        await this.redis.set(cacheKey, JSON.stringify(resp.data), 'EX', 86400)
+      } catch (err) {
+        this.logger.warn(`Cache write failed for ${cacheKey}: ${(err as Error).message}`)
+      }
       return resp.data
     } catch (err) {
       this.logger.warn(`Failed to fetch fundamentals for ${symbol}: ${(err as Error).message}`)

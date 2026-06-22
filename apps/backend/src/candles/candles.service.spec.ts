@@ -128,6 +128,25 @@ describe('CandlesService', () => {
       expect(result.t).toHaveLength(2) // null entry filtered out
     })
 
+    it('serves live data when the cache read fails (e.g. Redis over quota)', async () => {
+      mockRedis.get.mockRejectedValue(new Error('ERR max requests limit exceeded'))
+      jest.spyOn(axios, 'get').mockResolvedValue({ data: yfOkResponse })
+
+      const result = await service.getCandles('AAPL', '1D')
+
+      expect(result).toEqual(okCandles)
+    })
+
+    it('still returns data when the cache write fails', async () => {
+      mockRedis.get.mockResolvedValue(null)
+      mockRedis.set.mockRejectedValue(new Error('ERR max requests limit exceeded'))
+      jest.spyOn(axios, 'get').mockResolvedValue({ data: yfOkResponse })
+
+      const result = await service.getCandles('AAPL', '1D')
+
+      expect(result).toEqual(okCandles)
+    })
+
     it('throws BadRequestException for lowercase symbol', async () => {
       await expect(service.getCandles('aapl', '1D')).rejects.toThrow(BadRequestException)
     })
